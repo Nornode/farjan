@@ -1,0 +1,12 @@
+services:
+  farjan:
+    build: .
+    container_name: farjan
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      - TZ=Europe/Helsinki
+      - DATA_DIR=/data
