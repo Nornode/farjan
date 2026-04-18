@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://farjan.lagus.net/sitemap.xml

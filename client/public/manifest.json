@@ -1,7 +1,7 @@
 {
-  "name": "Skåldö Färjan",
+  "name": "Färjan – Skåldö & Barösunds färjan",
   "short_name": "Färjan",
-  "description": "Tidtabell för Skåldö-Skåldö färjan",
+  "description": "Live avgångstider för Skåldö och Barösunds färjan samt alla Finlands allmänna färjor. Finnish ferry timetables – Skåldö & Barösund. Suomen lauttaaikataulu.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f5faff",

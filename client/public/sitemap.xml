@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://farjan.lagus.net/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://farjan.lagus.net/"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/metadata</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/metadata"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/metadata"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/metadata"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://farjan.lagus.net/metadata"/>
+  </url>
+</urlset>
