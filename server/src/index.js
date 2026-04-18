@@ -15,8 +15,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_BUILD = path.join(__dirname, '../../client/dist');
 
-// Security headers
-app.use(helmet());
+// Security headers — CSP disabled: Helmet's defaults break Vite's module scripts
+// and upgrade-insecure-requests breaks plain HTTP access on port 3000.
+// All other headers (HSTS, X-Frame-Options, X-Content-Type-Options, etc.) are kept.
+app.use(helmet({ contentSecurityPolicy: false }));
 
 // Rate limiting: 60 requests per minute per IP on all API routes
 app.use('/api', rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false }));
@@ -51,7 +53,7 @@ app.use((req, res, next) => {
     const line = `[http] ${res.statusCode} ${req.method} ${req.path} — ${ip} (${ms}ms)`;
     if (res.statusCode >= 500) console.error(line);
     else if (res.statusCode >= 400) console.warn(line);
-    else console.log(line);
+    else if (req.path !== '/health') console.log(line);
   });
 
   next();
