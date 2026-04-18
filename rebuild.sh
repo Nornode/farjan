@@ -18,6 +18,8 @@ fail()  { echo -e "    ${RED}✖${RESET}  $*"; }
 NAME="farjan"
 PORT="${PORT:-3000}"
 DATA_DIR="${DATA_DIR:-$(pwd)/data}"
+ANALYTICS_TOKEN="${ANALYTICS_TOKEN:-}"
+LOG_ANALYTICS="${LOG_ANALYTICS:-true}"
 
 # Hash all files that affect the image build
 SOURCE_HASH=$(find Dockerfile client/ server/ -type f | sort | xargs sha256sum | sha256sum | awk '{print $1}')
@@ -54,12 +56,20 @@ fi
 
 step "Starting container '${NAME}'..."
 mkdir -p "$DATA_DIR"
+
+ANALYTICS_ARGS=()
+if [ -n "$ANALYTICS_TOKEN" ]; then
+  ANALYTICS_ARGS+=(-e "ANALYTICS_TOKEN=${ANALYTICS_TOKEN}")
+fi
+
 docker run -d \
   --name "$NAME" \
   --restart unless-stopped \
   -p "${PORT}:3000" \
   -v "${DATA_DIR}:/data" \
   -e TZ="${TZ:-Europe/Helsinki}" \
+  -e LOG_ANALYTICS="${LOG_ANALYTICS}" \
+  "${ANALYTICS_ARGS[@]}" \
   "$NAME"
 
 echo ""

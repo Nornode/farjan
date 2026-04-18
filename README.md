@@ -64,10 +64,16 @@ Opens at **http://localhost:3000**. The script stops any existing container, bui
 | `ANALYTICS_TOKEN`  | _(unset)_         | Secret token to access the analytics dashboard; if unset, analytics API is disabled  |
 | `LOG_ANALYTICS`    | `true`            | Set to `false` to disable event recording entirely                                   |
 
-Set variables in `docker-compose.yml` or pass them to `docker run -e`.
+Set variables in `docker-compose.yml` or pass them to `rebuild.sh` / `docker run -e`.
 
 ```bash
 PORT=8080 ./rebuild.sh
+
+# Enable the analytics dashboard
+ANALYTICS_TOKEN=your-strong-secret ./rebuild.sh
+
+# Disable analytics event recording
+LOG_ANALYTICS=false ./rebuild.sh
 ```
 
 ---
