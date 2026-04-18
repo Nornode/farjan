@@ -1,8 +1,9 @@
 import { useFerryData } from '../hooks/useFerryData.js';
 import Countdown from '../components/Countdown.jsx';
+import Disclaimer from '../components/Disclaimer.jsx';
 
-export default function MainCountdown() {
-  const { data, error, loading } = useFerryData();
+export default function MainCountdown({ selectedSlug }) {
+  const { data, error, loading } = useFerryData(selectedSlug);
 
   if (loading) {
     return (
@@ -41,33 +42,44 @@ export default function MainCountdown() {
       }).format(new Date(metadata.lastScrapedAt))
     : null;
 
+  // Use terminal location names from the data if they differ from Skåldö defaults
+  const islandLabel = island?.location?.toLowerCase().includes('saari') || island?.location?.toLowerCase().includes('ö)')
+    ? { pre: 'Från', main: 'ön', post: 'om' }
+    : { pre: 'Från', main: island?.location ?? 'ön', post: 'om' };
+
+  const mainlandLabel = mainland?.location?.toLowerCase().includes('mantere') || mainland?.location?.toLowerCase().includes('fastland')
+    ? { pre: 'Från', main: 'fastlandet', post: 'om' }
+    : { pre: 'Från', main: mainland?.location ?? 'fastlandet', post: 'om' };
+
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       {/* Two horizontal rows, one per terminal */}
       <div className="flex flex-col flex-1 min-h-0 divide-y divide-ferry-border dark:divide-slate-700">
         <Countdown
-          label={{ pre: 'Från', main: 'ön', post: 'om' }}
+          label={islandLabel}
           departures={island?.departures}
           breaks={breaks}
         />
         <Countdown
-          label={{ pre: 'Från', main: 'fastlandet', post: 'om' }}
+          label={mainlandLabel}
           departures={mainland?.departures}
           breaks={breaks}
         />
       </div>
 
-      {/* Footer: last update + scraper status */}
-      <div className="border-t border-ferry-border dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 px-4 py-2 flex items-center justify-between">
-        {lastUpdated && (
-          <p className="text-xs text-gray-400 dark:text-slate-500">Uppdaterad {lastUpdated}</p>
-        )}
-        {metadata?.scraperStatus === 'error' && (
-          <p className="text-xs text-red-400">Skrapning misslyckades</p>
-        )}
-        {metadata?.validityFrom && (
-          <p className="text-xs text-gray-400 dark:text-slate-500">Giltig fr.o.m. {metadata.validityFrom}</p>
-        )}
+      {/* Footer: last update · disclaimer · validity */}
+      <div className="border-t border-ferry-border dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 px-4 py-2 grid grid-cols-3 items-center">
+        <p className="text-xs text-gray-400 dark:text-slate-500 truncate">
+          {lastUpdated ? `Uppdaterad ${lastUpdated}` : ''}
+        </p>
+        <div className="flex justify-center">
+          <Disclaimer />
+        </div>
+        <p className="text-xs truncate text-right">
+          {metadata?.scraperStatus === 'error'
+            ? <span className="text-red-400">Skrapning misslyckades</span>
+            : <span className="text-gray-400 dark:text-slate-500">{metadata?.validityFrom ? `Giltig fr.o.m. ${metadata.validityFrom}` : ''}</span>}
+        </p>
       </div>
     </div>
   );

@@ -8,7 +8,6 @@ const TIMETABLE_PATH = path.join(DATA_DIR, 'timetable.json');
 const MAIN_URL =
   'https://www.finferries.fi/sv/farjetrafik/farjplatserna-och-tidtabellerna/skaldo.html';
 
-// Fallback breaks in case the page structure changes
 const FALLBACK_BREAKS = [
   { start: '11:10', end: '11:30' },
   { start: '14:10', end: '14:30' },
@@ -17,13 +16,11 @@ const FALLBACK_BREAKS = [
   { start: '03:00', end: '03:30' },
 ];
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+export function ensureDataDir() {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-async function fetchHtml(url) {
+export async function fetchHtml(url) {
   const res = await fetch(url, {
     headers: { 'User-Agent': 'farjan-timetable-bot/1.0' },
     timeout: 15000,
@@ -32,7 +29,6 @@ async function fetchHtml(url) {
   return res.text();
 }
 
-// Parse "11.10–11.30" or "11:10–11:30" style break strings
 function parseBreak(text) {
   const match = text.trim().match(/^(\d{1,2})[.:](\d{2})\s*[–\-]\s*(\d{1,2})[.:](\d{2})$/);
   if (!match) return null;
@@ -40,110 +36,61 @@ function parseBreak(text) {
   return { start: `${pad(match[1])}:${pad(match[2])}`, end: `${pad(match[3])}:${pad(match[4])}` };
 }
 
-export async function runScraper() {
-  ensureDataDir();
-  const requestedAt = new Date().toISOString();
-
-  // Step 1: Find the timetable sub-page URL from the main page
-  let timetableUrl;
-  try {
-    const mainHtml = await fetchHtml(MAIN_URL);
-    const $main = cheerio.load(mainHtml);
-
-    // The timetable URL is stored in data-timetable-url attributes (one per ferry route).
-    // Find the one that references the skaldo timetable.
-    let rawAttr = null;
-    $main('[data-timetable-url]').each((_, el) => {
-      const val = $main(el).attr('data-timetable-url') || '';
-      if (val.toLowerCase().includes('skaldo')) {
-        rawAttr = val;
-        return false; // break
-      }
-    });
-    if (!rawAttr) throw new Error('Skåldö data-timetable-url not found on main page');
-
-    // Attribute can contain comma-separated URLs; take the first, trimmed
-    timetableUrl = rawAttr.split(',')[0].trim();
-    console.log(`[scraper] Timetable sub-page: ${timetableUrl}`);
-  } catch (err) {
-    console.error('[scraper] Failed to resolve timetable URL:', err.message);
-    writeError(requestedAt, err.message);
-    return;
-  }
-
-  // Step 2: Fetch and parse the actual timetable page
-  let html;
-  try {
-    html = await fetchHtml(timetableUrl);
-  } catch (err) {
-    console.error('[scraper] Failed to fetch timetable page:', err.message);
-    writeError(requestedAt, err.message);
-    return;
-  }
-
-  const $ = cheerio.load(html);
-
-  // Step 3: Parse both timetable sections
-  // Structure: <h4>Skåldö (saari/ö)</h4>
-  //            <ul class="pick_ferry_line__detail_window__times"><li>05:00</li>...
-  const sectionDefs = [
-    { key: 'island', label: 'Skåldö (saari/ö)' },
-    { key: 'mainland', label: 'Skåldö (mantere/fastland)' },
-  ];
-
+/**
+ * Parse an already-loaded Cheerio object for a finferries timetable sub-page.
+ * Returns { timetables, breaks, validityFrom } — reusable by registry and cache.
+ */
+export function parseTimetablePage($, sourceUrl) {
+  // Detect all <h4> headings that precede a departure list
   const timetables = {};
+  const foundHeadings = [];
 
-  for (const def of sectionDefs) {
-    const heading = $('h4').filter((_, el) => $(el).text().trim() === def.label).first();
+  $('h4').each((_, h4el) => {
+    const label = $(h4el).text().trim();
+    const ul = $(h4el).nextAll('ul.pick_ferry_line__detail_window__times').first();
+    if (!ul.length) return;
 
-    if (!heading.length) {
-      console.warn(`[scraper] Heading "${def.label}" not found`);
-      timetables[def.key] = { location: def.label, departures: [] };
-      continue;
-    }
-
-    // The <ul> is the next sibling after the heading (possibly inside same parent div)
-    const ul = heading.nextAll('ul.pick_ferry_line__detail_window__times').first();
     const departures = [];
-
     ul.find('li').each((_, li) => {
-      const text = $(li).text().trim();
-      // Validate HH:MM format
-      if (/^\d{2}:\d{2}$/.test(text)) {
-        departures.push(text);
-      }
+      const t = $(li).text().trim();
+      if (/^\d{2}:\d{2}$/.test(t)) departures.push(t);
     });
 
-    timetables[def.key] = { location: def.label, departures };
-    console.log(`[scraper] ${def.label}: ${departures.length} departures`);
+    if (departures.length) {
+      foundHeadings.push({ label, departures });
+    }
+  });
+
+  // Map headings to island / mainland keys based on Finnish/Swedish suffixes
+  for (const { label, departures } of foundHeadings) {
+    const lower = label.toLowerCase();
+    if (lower.includes('saari') || lower.includes('ö)')) {
+      timetables.island = { location: label, departures };
+    } else if (lower.includes('mantere') || lower.includes('fastland')) {
+      timetables.mainland = { location: label, departures };
+    } else {
+      // Single-terminal ferry — treat as island
+      if (!timetables.island) timetables.island = { location: label, departures };
+      else timetables.mainland = { location: label, departures };
+    }
   }
 
-  // Step 4: Parse break times
-  // Structure: <p>Tauot / Pauser / Breaks:<br>11.10–11.30<br>14.10–14.30<br>...</p>
+  // Parse breaks
   let breaks = [];
   $('p').each((_, el) => {
     const html = $(el).html() || '';
     if (!html.includes('Tauot') && !html.includes('Pauser') && !html.includes('Breaks')) return;
-
-    // Replace <br> tags with newlines, then split
     const lines = html.replace(/<br\s*\/?>/gi, '\n').split('\n');
     for (const line of lines) {
-      // Strip any remaining HTML tags
       const clean = line.replace(/<[^>]+>/g, '').replace(/&ndash;/g, '–').trim();
       const parsed = parseBreak(clean);
       if (parsed) breaks.push(parsed);
     }
   });
 
-  if (!breaks.length) {
-    console.warn('[scraper] No breaks parsed from page – using fallback list');
-    breaks = FALLBACK_BREAKS;
-  } else {
-    console.log(`[scraper] Parsed ${breaks.length} break periods`);
-  }
+  if (!breaks.length) breaks = FALLBACK_BREAKS;
 
-  // Step 5: Parse validity date
-  // Structure: <span class="effective_header">Giltig 01.04.2026–</span>
+  // Parse validity date
   let validityFrom = null;
   $('.effective_header').each((_, el) => {
     const text = $(el).text().trim();
@@ -154,43 +101,109 @@ export async function runScraper() {
     }
   });
 
-  // Step 6: Write JSON
-  const data = {
+  return { timetables, breaks, validityFrom };
+}
+
+/**
+ * Scrape a timetable sub-page URL and return parsed data.
+ * Throws on network or parse failure.
+ */
+export async function scrapeTimetableUrl(url) {
+  const html = await fetchHtml(url);
+  const $ = cheerio.load(html);
+  const { timetables, breaks, validityFrom } = parseTimetablePage($, url);
+
+  const totalDeps =
+    (timetables.island?.departures?.length ?? 0) +
+    (timetables.mainland?.departures?.length ?? 0);
+
+  if (!totalDeps) throw new Error(`No departures found at ${url}`);
+
+  return {
     metadata: {
       lastScrapedAt: new Date().toISOString(),
-      requestedAt,
+      requestedAt: new Date().toISOString(),
       timezone: 'Europe/Helsinki',
       validityFrom,
       scraperStatus: 'success',
       errorMessage: null,
       breaks,
-      sourceUrl: MAIN_URL,
-      timetableUrl,
+      timetableUrl: url,
     },
     timetables,
   };
-
-  fs.writeFileSync(TIMETABLE_PATH, JSON.stringify(data, null, 2), 'utf8');
-  console.log(`[scraper] Saved to ${TIMETABLE_PATH}`);
 }
 
-function writeError(requestedAt, message) {
+/**
+ * Quick check: does this URL have any departure data?
+ * Returns true/false without throwing.
+ */
+export async function hasDepartures(url) {
+  try {
+    const html = await fetchHtml(url);
+    const $ = cheerio.load(html);
+    return $('ul.pick_ferry_line__detail_window__times li').length > 0;
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Backward-compatible Skåldö scraper (used by scheduler + /api/refresh)
+// ---------------------------------------------------------------------------
+
+export async function runScraper() {
+  ensureDataDir();
+  const requestedAt = new Date().toISOString();
+
+  let timetableUrl;
+  try {
+    const mainHtml = await fetchHtml(MAIN_URL);
+    const $main = cheerio.load(mainHtml);
+
+    let rawAttr = null;
+    $main('[data-timetable-url]').each((_, el) => {
+      const val = $main(el).attr('data-timetable-url') || '';
+      if (val.toLowerCase().includes('skaldo')) { rawAttr = val; return false; }
+    });
+    if (!rawAttr) throw new Error('Skåldö data-timetable-url not found on main page');
+    timetableUrl = rawAttr.split(',')[0].trim();
+    console.log(`[scraper] Skåldö timetable sub-page: ${timetableUrl}`);
+  } catch (err) {
+    console.error('[scraper] Failed to resolve Skåldö URL:', err.message);
+    writeError(TIMETABLE_PATH, requestedAt, err.message);
+    return;
+  }
+
+  try {
+    const data = await scrapeTimetableUrl(timetableUrl);
+    data.metadata.requestedAt = requestedAt;
+    data.metadata.sourceUrl = MAIN_URL;
+
+    // Write legacy path (backward compat)
+    fs.writeFileSync(TIMETABLE_PATH, JSON.stringify(data, null, 2), 'utf8');
+
+    // Also write to slug-based cache so /api/timetable/:slug hits the same data
+    const slug = timetableUrl.split('/').pop().replace(/\.html?$/i, '');
+    const slugDir = path.join(DATA_DIR, 'timetables');
+    if (!fs.existsSync(slugDir)) fs.mkdirSync(slugDir, { recursive: true });
+    fs.writeFileSync(path.join(slugDir, `${slug}.json`), JSON.stringify(data, null, 2), 'utf8');
+
+    const total = (data.timetables.island?.departures?.length ?? 0) +
+                  (data.timetables.mainland?.departures?.length ?? 0);
+    console.log(`[scraper] Skåldö saved (${total} total departures) → ${TIMETABLE_PATH} + timetables/${slug}.json`);
+  } catch (err) {
+    console.error('[scraper] Failed to scrape Skåldö:', err.message);
+    writeError(TIMETABLE_PATH, requestedAt, err.message);
+  }
+}
+
+function writeError(filePath, requestedAt, message) {
   ensureDataDir();
   let existing = {};
-  try {
-    existing = JSON.parse(fs.readFileSync(TIMETABLE_PATH, 'utf8'));
-  } catch (_) {}
-
-  const data = {
+  try { existing = JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch (_) {}
+  fs.writeFileSync(filePath, JSON.stringify({
     ...existing,
-    metadata: {
-      ...(existing.metadata || {}),
-      lastScrapedAt: new Date().toISOString(),
-      requestedAt,
-      scraperStatus: 'error',
-      errorMessage: message,
-    },
-  };
-
-  fs.writeFileSync(TIMETABLE_PATH, JSON.stringify(data, null, 2), 'utf8');
+    metadata: { ...(existing.metadata || {}), lastScrapedAt: new Date().toISOString(), requestedAt, scraperStatus: 'error', errorMessage: message },
+  }, null, 2), 'utf8');
 }

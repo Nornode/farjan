@@ -15,7 +15,7 @@ echo "==> Removing image '$NAME' (if exists)..."
 docker rmi "$NAME" 2>/dev/null && echo "    Image removed." || echo "    No image found."
 
 echo "==> Building image '$NAME'..."
-docker build -t "$NAME" .
+docker build --no-cache -t "$NAME" .
 
 echo "==> Starting container '$NAME'..."
 mkdir -p "$DATA_DIR"

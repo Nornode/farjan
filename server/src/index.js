@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { runScraper } from './scraper.js';
 import { startScheduler } from './scheduler.js';
+import { ensureRegistry } from './ferryRegistry.js';
 import apiRoutes from './api/routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -64,6 +65,9 @@ console.log('[startup] Running initial timetable scrape...');
 runScraper()
   .then(() => console.log('[startup] Initial scrape complete.'))
   .catch((err) => console.error('[startup] Initial scrape failed:', err.message));
+
+// Build ferry registry on startup if missing or stale (>7 days)
+ensureRegistry().catch((err) => console.error('[startup] Registry init failed:', err.message));
 
 startScheduler();
 

@@ -1,0 +1,68 @@
+import { useState, useRef, useEffect } from 'react';
+
+export default function FerrySelector({ ferries, selectedFerry, setFerry, loading }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!open) return;
+    function onClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    document.addEventListener('touchstart', onClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+      document.removeEventListener('touchstart', onClickOutside);
+    };
+  }, [open]);
+
+  const displayName = selectedFerry?.name ?? (loading ? '…' : 'Välj färja');
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1 text-base font-bold tracking-wide text-white hover:text-white/80 transition-colors"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {displayName}
+        <span className={`text-xs transition-transform duration-150 ${open ? 'rotate-180' : ''}`}>▼</span>
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="absolute left-0 top-full mt-1 z-50 w-64 max-h-[70vh] overflow-y-auto rounded-lg shadow-xl bg-white dark:bg-slate-800 border border-ferry-border dark:border-slate-600"
+        >
+          {loading ? (
+            <p className="px-4 py-3 text-sm text-gray-400 animate-pulse">Laddar ferrylista…</p>
+          ) : ferries.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-gray-400">Inga färjor tillgängliga</p>
+          ) : (
+            ferries.map((ferry) => {
+              const isSelected = ferry.id === selectedFerry?.id;
+              return (
+                <button
+                  key={ferry.id}
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => { setFerry(ferry.id); setOpen(false); }}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors
+                    ${isSelected
+                      ? 'bg-ferry-blue/10 dark:bg-blue-900/30 text-ferry-navy dark:text-blue-300 font-semibold'
+                      : 'text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700'
+                    }`}
+                >
+                  {ferry.name}
+                </button>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

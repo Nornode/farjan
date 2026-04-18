@@ -33,8 +33,26 @@ function Row({ label, value }) {
   );
 }
 
-export default function Metadata() {
-  const { data, error, loading, refetch } = useFerryData();
+function DeparturePills({ departures }) {
+  if (!departures?.length) {
+    return <p className="text-sm text-gray-400 dark:text-slate-500">Inga avgångar</p>;
+  }
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {departures.map((dep) => (
+        <span
+          key={dep}
+          className="text-xs border border-ferry-border dark:border-slate-600 text-ferry-navy dark:text-slate-300 rounded px-1.5 py-0.5 font-mono"
+        >
+          {dep}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export default function Metadata({ selectedSlug, selectedFerry }) {
+  const { data, error, loading, refetch } = useFerryData(selectedSlug);
 
   if (loading) {
     return (
@@ -53,15 +71,24 @@ export default function Metadata() {
   }
 
   const { metadata, timetables } = data;
+  const ferryName = selectedFerry?.name ?? 'Okänd färja';
+  const islandLocation = timetables?.island?.location ?? 'Ö';
+  const mainlandLocation = timetables?.mainland?.location ?? 'Fastland';
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-4 max-w-lg mx-auto w-full">
+
+      <Section title="Färja">
+        <Row label="Namn" value={ferryName} />
+        <Row label="Slug" value={selectedSlug ?? '–'} />
+        <Row label="Tidtabell-URL" value={metadata?.timetableUrl} />
+      </Section>
+
       <Section title="Skrapning">
         <Row label="Status" value={metadata?.scraperStatus === 'success' ? 'OK' : 'Fel'} />
         <Row label="Skrapad (Helsingfors)" value={formatLocalTime(metadata?.lastScrapedAt)} />
         <Row label="Skrapad (UTC)" value={metadata?.lastScrapedAt?.replace('T', ' ').replace('Z', ' UTC')} />
         <Row label="Begärd" value={formatLocalTime(metadata?.requestedAt)} />
-        <Row label="Källa" value={metadata?.sourceUrl} />
         {metadata?.errorMessage && (
           <Row label="Felmeddelande" value={metadata.errorMessage} />
         )}
@@ -70,8 +97,8 @@ export default function Metadata() {
       <Section title="Tidtabell">
         <Row label="Giltig fr.o.m." value={metadata?.validityFrom ?? '–'} />
         <Row label="Tidszon" value={metadata?.timezone} />
-        <Row label="Avgångar (ö)" value={`${timetables?.island?.departures?.length ?? 0} st`} />
-        <Row label="Avgångar (fastland)" value={`${timetables?.mainland?.departures?.length ?? 0} st`} />
+        <Row label={`Avgångar (${islandLocation})`} value={`${timetables?.island?.departures?.length ?? 0} st`} />
+        <Row label={`Avgångar (${mainlandLocation})`} value={`${timetables?.mainland?.departures?.length ?? 0} st`} />
       </Section>
 
       <Section title="Uppehåll (Tauot / Pauser)">
@@ -90,11 +117,11 @@ export default function Metadata() {
         )}
       </Section>
 
-      <Section title="Avgångar – Skåldö (ö)">
+      <Section title={`Avgångar – ${islandLocation}`}>
         <DeparturePills departures={timetables?.island?.departures} />
       </Section>
 
-      <Section title="Avgångar – Skåldö (fastland)">
+      <Section title={`Avgångar – ${mainlandLocation}`}>
         <DeparturePills departures={timetables?.mainland?.departures} />
       </Section>
 
@@ -106,24 +133,6 @@ export default function Metadata() {
           Uppdatera
         </button>
       </div>
-    </div>
-  );
-}
-
-function DeparturePills({ departures }) {
-  if (!departures?.length) {
-    return <p className="text-sm text-gray-400 dark:text-slate-500">Inga avgångar</p>;
-  }
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {departures.map((dep) => (
-        <span
-          key={dep}
-          className="text-xs border border-ferry-border dark:border-slate-600 text-ferry-navy dark:text-slate-300 rounded px-1.5 py-0.5 font-mono"
-        >
-          {dep}
-        </span>
-      ))}
     </div>
   );
 }
