@@ -11,21 +11,30 @@ SOURCE_HASH=$(find Dockerfile client/ server/ -type f | sort | xargs sha256sum |
 # Hash stored in the existing image label (empty if image doesn't exist)
 EXISTING_HASH=$(docker image inspect "$NAME" --format '{{ index .Config.Labels "build-hash" }}' 2>/dev/null || true)
 
+NEW_IMAGE="${NAME}:new"
+
+if [ "$SOURCE_HASH" = "$EXISTING_HASH" ]; then
+  echo "==> No source changes detected, skipping image rebuild."
+else
+  echo "==> Source changes detected, building new image in the background..."
+  docker build --no-cache --label "build-hash=${SOURCE_HASH}" -t "$NEW_IMAGE" . \
+    || { echo "ERROR: Image build failed — existing container left untouched."; exit 1; }
+  echo "    Build succeeded."
+fi
+
 echo "==> Stopping container '$NAME' (if running)..."
 docker stop "$NAME" 2>/dev/null && echo "    Stopped." || echo "    Not running."
 
 echo "==> Removing container '$NAME' (if exists)..."
 docker rm "$NAME" 2>/dev/null && echo "    Removed." || echo "    Not found."
 
-if [ "$SOURCE_HASH" = "$EXISTING_HASH" ]; then
-  echo "==> No source changes detected, skipping image rebuild."
-else
-  echo "==> Source changes detected, rebuilding image '$NAME'..."
-
+if [ "$SOURCE_HASH" != "$EXISTING_HASH" ]; then
   echo "==> Removing old image '$NAME' (if exists)..."
   docker rmi "$NAME" 2>/dev/null && echo "    Image removed." || echo "    No image found."
 
-  docker build --no-cache --label "build-hash=${SOURCE_HASH}" -t "$NAME" .
+  echo "==> Tagging new image as '$NAME'..."
+  docker tag "$NEW_IMAGE" "$NAME"
+  docker rmi "$NEW_IMAGE"
 fi
 
 echo "==> Starting container '$NAME'..."
