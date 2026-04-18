@@ -19,7 +19,7 @@ function ErrorFallback() {
 export default function App() {
   const { dark, toggle } = useTheme();
   const { ferries, loading: ferriesLoading, selectedFerry, selectedSlug, setFerry } = useFerrySelector();
-  const { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall } = useInstallPrompt();
+  const { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall, isInstalled } = useInstallPrompt();
 
   return (
     <BrowserRouter>
@@ -44,7 +44,7 @@ export default function App() {
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <Routes>
               <Route path="/" element={<MainCountdown selectedSlug={selectedSlug} />} />
-              <Route path="/metadata" element={<Metadata selectedSlug={selectedSlug} selectedFerry={selectedFerry} />} />
+              <Route path="/metadata" element={<Metadata selectedSlug={selectedSlug} selectedFerry={selectedFerry} isIos={isIos} onInstall={triggerNativeInstall} isInstalled={isInstalled} />} />
             </Routes>
           </ErrorBoundary>
         </main>

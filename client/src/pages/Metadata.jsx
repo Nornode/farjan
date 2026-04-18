@@ -51,7 +51,7 @@ function DeparturePills({ departures }) {
   );
 }
 
-export default function Metadata({ selectedSlug, selectedFerry }) {
+export default function Metadata({ selectedSlug, selectedFerry, isIos, onInstall, isInstalled }) {
   const { data, error, loading, refetch } = useFerryData(selectedSlug);
 
   if (loading) {
@@ -77,6 +77,28 @@ export default function Metadata({ selectedSlug, selectedFerry }) {
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-4 max-w-lg mx-auto w-full">
+
+      <Section title="Om tjänsten">
+        {isInstalled ? (
+          <p className="text-sm text-gray-500 dark:text-slate-400">Appen är redan installerad på din enhet.</p>
+        ) : isIos ? (
+          <p className="text-sm text-gray-600 dark:text-slate-300">
+            Installera appen: tryck på{' '}
+            <span className="font-semibold">Dela</span> i Safari och välj{' '}
+            <span className="font-semibold">"Lägg till på hemskärmen"</span>.
+          </p>
+        ) : (
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-gray-600 dark:text-slate-300">Lägg till appen på hemskärmen för snabbare åtkomst.</p>
+            <button
+              onClick={onInstall}
+              className="shrink-0 px-3 py-1.5 rounded-full bg-ferry-navy dark:bg-slate-700 text-white text-xs font-semibold hover:bg-ferry-blue dark:hover:bg-slate-600 transition-colors"
+            >
+              Installera
+            </button>
+          </div>
+        )}
+      </Section>
 
       <Section title="Färja">
         <Row label="Namn" value={ferryName} />
