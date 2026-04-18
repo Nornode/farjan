@@ -7,6 +7,7 @@ import { runScraper } from './scraper.js';
 import { startScheduler } from './scheduler.js';
 import { ensureRegistry } from './ferryRegistry.js';
 import apiRoutes from './api/routes.js';
+import { recordPageView } from './analytics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,6 +47,7 @@ app.use((req, res, next) => {
 
   if (isPageLoad) {
     console.log(`[page] Load from ${ip} — ${req.headers['user-agent'] ?? 'unknown'}`);
+    recordPageView(req);
   }
 
   res.on('finish', () => {

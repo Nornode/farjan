@@ -10,6 +10,11 @@ services:
     environment:
       - TZ=${TZ:-Europe/Helsinki}
       - DATA_DIR=/data
+      # Set ANALYTICS_TOKEN to enable the analytics dashboard at /analytics
+      # e.g. ANALYTICS_TOKEN=change-me-to-a-strong-secret
+      # - ANALYTICS_TOKEN=${ANALYTICS_TOKEN}
+      # Set LOG_ANALYTICS=false to disable event recording entirely
+      # - LOG_ANALYTICS=false
     deploy:
       resources:
         limits:
