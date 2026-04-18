@@ -1,0 +1,17 @@
+{
+  "name": "Skåldö Färjan",
+  "short_name": "Färjan",
+  "description": "Tidtabell för Skåldö-Skåldö färjan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5faff",
+  "theme_color": "#002d6e",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

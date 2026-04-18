@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import Nav from './components/Nav.jsx';
+import InstallBanner from './components/InstallBanner.jsx';
 import MainCountdown from './pages/MainCountdown.jsx';
 import Metadata from './pages/Metadata.jsx';
 import { useTheme } from './hooks/useTheme.js';
 import { useFerrySelector } from './hooks/useFerrySelector.js';
+import { useInstallPrompt } from './hooks/useInstallPrompt.js';
 
 function ErrorFallback() {
   return (
@@ -17,6 +19,7 @@ function ErrorFallback() {
 export default function App() {
   const { dark, toggle } = useTheme();
   const { ferries, loading: ferriesLoading, selectedFerry, selectedSlug, setFerry } = useFerrySelector();
+  const { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall } = useInstallPrompt();
 
   return (
     <BrowserRouter>
@@ -29,6 +32,14 @@ export default function App() {
           setFerry={setFerry}
           ferriesLoading={ferriesLoading}
         />
+        {shouldShowPrompt && (
+          <InstallBanner
+            visitCount={visitCount}
+            isIos={isIos}
+            onInstall={triggerNativeInstall}
+            onDismiss={dismiss}
+          />
+        )}
         <main className="flex-1 min-h-0 flex flex-col">
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <Routes>
