@@ -18,8 +18,36 @@ fail()  { echo -e "    ${RED}✖${RESET}  $*"; }
 NAME="farjan"
 PORT="${PORT:-3000}"
 DATA_DIR="${DATA_DIR:-$(pwd)/data}"
-ANALYTICS_TOKEN="${ANALYTICS_TOKEN:-}"
 LOG_ANALYTICS="${LOG_ANALYTICS:-true}"
+
+ENV_FILE="$(pwd)/.env"
+
+# Load persisted variables from .env (does not override env vars already exported)
+if [ -f "$ENV_FILE" ]; then
+  # shellcheck source=/dev/null
+  set -a; source "$ENV_FILE"; set +a
+fi
+
+ANALYTICS_TOKEN="${ANALYTICS_TOKEN:-}"
+
+# Prompt for ANALYTICS_TOKEN if it is not set (blank answer = analytics disabled)
+if [ -z "$ANALYTICS_TOKEN" ]; then
+  echo -e "${YELLOW}ANALYTICS_TOKEN is not set.${RESET}"
+  read -r -s -p "    Enter analytics token (leave blank to disable analytics): " _input_token
+  echo ""
+  if [ -n "$_input_token" ]; then
+    ANALYTICS_TOKEN="$_input_token"
+    # Persist to .env for future runs, creating the file if needed
+    if grep -q "^ANALYTICS_TOKEN=" "$ENV_FILE" 2>/dev/null; then
+      sed -i "s|^ANALYTICS_TOKEN=.*|ANALYTICS_TOKEN=${ANALYTICS_TOKEN}|" "$ENV_FILE"
+    else
+      echo "ANALYTICS_TOKEN=${ANALYTICS_TOKEN}" >> "$ENV_FILE"
+    fi
+    ok "Token saved to .env — future runs will use it automatically."
+  else
+    skip "Analytics dashboard will be disabled."
+  fi
+fi
 
 # Hash all files that affect the image build
 SOURCE_HASH=$(find Dockerfile client/ server/ -type f | sort | xargs sha256sum | sha256sum | awk '{print $1}')
