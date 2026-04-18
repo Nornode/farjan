@@ -43,6 +43,7 @@ export function useInstallPrompt() {
   const deferredPrompt = useRef(null);
   const [shouldShowPrompt, setShouldShowPrompt] = useState(false);
   const [isIos, setIsIos] = useState(false);
+  const [visitCount, setVisitCountState] = useState(0);
 
   useEffect(() => {
     // Never prompt if already running as installed PWA
@@ -51,6 +52,7 @@ export function useInstallPrompt() {
     // Increment visit count on each page load
     const newCount = getVisitCount() + 1;
     setVisitCount(newCount);
+    setVisitCountState(newCount);
 
     if (isDismissed() || !PROMPT_VISITS.has(newCount)) return;
 
@@ -86,5 +88,5 @@ export function useInstallPrompt() {
     setShouldShowPrompt(false);
   }
 
-  return { shouldShowPrompt, isIos, dismiss, triggerNativeInstall };
+  return { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall };
 }

@@ -1,4 +1,41 @@
-export default function InstallBanner({ isIos, onInstall, onDismiss }) {
+// Natural, non-pushy messages keyed by visit milestone.
+// Each milestone has a few variants; one is picked based on visit count mod.
+const MESSAGES = {
+  3: [
+    'Verkar som du hittar hit ofta — visste du att du kan spara sidan på hemskärmen?',
+    'Tredje gången gillt! Det går snabbare att öppna om du lägger till den på hemskärmen.',
+    'Du har hittat hit några gånger nu. Hemskärmen är ett klick snabbare.',
+  ],
+  10: [
+    'Det här är tionde gången du tittar in — det är lättare att hitta från hemskärmen.',
+    'Tionde besöket! Du verkar gilla färjan. Spara den på hemskärmen så är den alltid nära.',
+    'Tio gånger hit — lite enklare med en ikon på hemskärmen, eller hur?',
+  ],
+  20: [
+    'Tjugonde besöket — du är nästan en stamgäst. Hemskärmsikonen sparar dig ett par klick.',
+    'Tjugo gånger! Det är värt att ha den på hemskärmen vid det här laget.',
+    'Du hittar tydligt hit ofta. En genväg på hemskärmen gör det ännu smidigare.',
+  ],
+  50: [
+    'Femtio besök — imponerande! Den förtjänar nog en plats på hemskärmen.',
+    'Halvvägs till hundra besök. Hemskärmsgenvägen väntar fortfarande på dig.',
+    'Femtionde gången — du är en riktig färjefantast. Ta den med dig på hemskärmen!',
+  ],
+};
+
+const IOS_SUFFIX = ' Tryck på Dela och välj "Lägg till på hemskärmen".';
+
+function getMessage(visitCount, isIos) {
+  const milestones = [3, 10, 20, 50];
+  const milestone = milestones.find((m) => visitCount <= m) ?? 50;
+  const variants = MESSAGES[milestone];
+  const text = variants[visitCount % variants.length];
+  return isIos ? text + IOS_SUFFIX : text;
+}
+
+export default function InstallBanner({ visitCount, isIos, onInstall, onDismiss }) {
+  const message = getMessage(visitCount, isIos);
+
   return (
     <div
       role="banner"
@@ -6,18 +43,7 @@ export default function InstallBanner({ isIos, onInstall, onDismiss }) {
     >
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-base shrink-0" aria-hidden="true">📱</span>
-        {isIos ? (
-          <span className="leading-snug">
-            Lägg till på hemskärmen: tryck på{' '}
-            <span className="font-semibold">Dela</span>{' '}
-            och välj{' '}
-            <span className="font-semibold">Lägg till på hemskärmen</span>.
-          </span>
-        ) : (
-          <span className="leading-snug">
-            Lägg till på hemskärmen för snabb åtkomst.
-          </span>
-        )}
+        <span className="leading-snug">{message}</span>
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
