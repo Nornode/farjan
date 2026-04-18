@@ -1,7 +1,32 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function Disclaimer() {
   const [open, setOpen] = useState(false);
+  const closeRef = useRef(null);
+
+  // Focus close button when modal opens; close on Escape
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    function onKeyDown(e) {
+      if (e.key === 'Escape') { setOpen(false); return; }
+      // Trap Tab inside the modal
+      if (e.key === 'Tab') {
+        const focusable = closeRef.current?.closest('[role="dialog"]')
+          ?.querySelectorAll('a[href], button, [tabindex]:not([tabindex="-1"])');
+        if (!focusable?.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
 
   return (
     <>
@@ -19,11 +44,15 @@ export default function Disclaimer() {
           onClick={() => setOpen(false)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Om tjänsten"
             className="relative w-full max-w-sm rounded-2xl shadow-2xl bg-white dark:bg-slate-800 border border-ferry-border dark:border-slate-600 p-6"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close */}
             <button
+              ref={closeRef}
               onClick={() => setOpen(false)}
               className="absolute top-4 right-4 text-gray-400 dark:text-slate-500 hover:text-ferry-navy dark:hover:text-white transition-colors text-lg leading-none"
               aria-label="Stäng"

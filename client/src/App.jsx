@@ -1,9 +1,18 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary';
 import Nav from './components/Nav.jsx';
 import MainCountdown from './pages/MainCountdown.jsx';
 import Metadata from './pages/Metadata.jsx';
 import { useTheme } from './hooks/useTheme.js';
 import { useFerrySelector } from './hooks/useFerrySelector.js';
+
+function ErrorFallback() {
+  return (
+    <div className="flex-1 flex items-center justify-center px-6">
+      <p className="text-red-500 text-sm">Något gick fel. Ladda om sidan.</p>
+    </div>
+  );
+}
 
 export default function App() {
   const { dark, toggle } = useTheme();
@@ -21,10 +30,12 @@ export default function App() {
           ferriesLoading={ferriesLoading}
         />
         <main className="flex-1 min-h-0 flex flex-col">
-          <Routes>
-            <Route path="/" element={<MainCountdown selectedSlug={selectedSlug} />} />
-            <Route path="/metadata" element={<Metadata selectedSlug={selectedSlug} selectedFerry={selectedFerry} />} />
-          </Routes>
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <Routes>
+              <Route path="/" element={<MainCountdown selectedSlug={selectedSlug} />} />
+              <Route path="/metadata" element={<Metadata selectedSlug={selectedSlug} selectedFerry={selectedFerry} />} />
+            </Routes>
+          </ErrorBoundary>
         </main>
       </div>
     </BrowserRouter>

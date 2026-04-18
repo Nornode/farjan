@@ -2,12 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { scrapeTimetableUrl, ensureDataDir } from './scraper.js';
 import { loadRegistry } from './ferryRegistry.js';
+import { DATA_DIR, TIMETABLE_TTL_MS } from './config.js';
 
-const DATA_DIR = process.env.DATA_DIR || '/data';
 const TIMETABLES_DIR = path.join(DATA_DIR, 'timetables');
 const LEGACY_PATH = path.join(DATA_DIR, 'timetable.json');
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL_MS = TIMETABLE_TTL_MS;
 
 function timetablePath(slug) {
   return path.join(TIMETABLES_DIR, `${slug}.json`);
@@ -61,11 +61,15 @@ function urlForSlug(slug) {
   return null;
 }
 
+// Per-slug in-flight promise lock — prevents concurrent duplicate scrapes
+const inFlight = new Map();
+
 /**
  * Get a timetable for the given slug.
  *  - If cached and fresh, return cached data.
  *  - If legacy timetable.json matches the slug and is fresh, seed from it.
  *  - Otherwise scrape, persist, and return fresh data.
+ *  - Concurrent requests for the same uncached slug share a single scrape.
  * Throws if the slug is unknown or scraping fails.
  */
 export async function getTimetable(slug) {
@@ -83,17 +87,28 @@ export async function getTimetable(slug) {
     return JSON.parse(fs.readFileSync(cachePath, 'utf8'));
   }
 
+  // If a scrape for this slug is already in progress, await it instead of starting another
+  if (inFlight.has(slug)) {
+    console.log(`[cache] Waiting for in-flight scrape of ${slug}`);
+    return inFlight.get(slug);
+  }
+
   const url = urlForSlug(slug);
   if (!url) throw new Error(`Unknown ferry slug: ${slug}`);
 
   console.log(`[cache] Scraping fresh timetable for ${slug} from ${url}`);
-  const data = await scrapeTimetableUrl(url);
 
-  fs.writeFileSync(cachePath, JSON.stringify(data, null, 2), 'utf8');
-  const total =
-    (data.timetables.island?.departures?.length ?? 0) +
-    (data.timetables.mainland?.departures?.length ?? 0);
-  console.log(`[cache] Saved timetable for ${slug} (${total} total departures)`);
+  const scrapePromise = scrapeTimetableUrl(url)
+    .then((data) => {
+      fs.writeFileSync(cachePath, JSON.stringify(data, null, 2), 'utf8');
+      const total =
+        (data.timetables.island?.departures?.length ?? 0) +
+        (data.timetables.mainland?.departures?.length ?? 0);
+      console.log(`[cache] Saved timetable for ${slug} (${total} total departures)`);
+      return data;
+    })
+    .finally(() => inFlight.delete(slug));
 
-  return data;
+  inFlight.set(slug, scrapePromise);
+  return scrapePromise;
 }

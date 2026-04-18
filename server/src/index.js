@@ -1,4 +1,6 @@
 import express from 'express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { runScraper } from './scraper.js';
@@ -12,6 +14,12 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_BUILD = path.join(__dirname, '../../client/dist');
+
+// Security headers
+app.use(helmet());
+
+// Rate limiting: 60 requests per minute per IP on all API routes
+app.use('/api', rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false }));
 
 // Static asset extensions — requests for these are not page loads
 const ASSET_RE = /\.(js|css|png|jpg|jpeg|ico|svg|woff|woff2|ttf|map|webmanifest)(\?.*)?$/i;
@@ -60,17 +68,28 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(CLIENT_BUILD, 'index.html'));
 });
 
-// Run scraper on startup, then start the daily scheduler
+// Run scraper on startup, then init registry
 console.log('[startup] Running initial timetable scrape...');
-runScraper()
-  .then(() => console.log('[startup] Initial scrape complete.'))
-  .catch((err) => console.error('[startup] Initial scrape failed:', err.message));
+const server = app.listen(PORT, () => {
+  console.log(`[server] Listening on http://localhost:${PORT}`);
+});
 
-// Build ferry registry on startup if missing or stale (>7 days)
-ensureRegistry().catch((err) => console.error('[startup] Registry init failed:', err.message));
+runScraper()
+  .then(() => {
+    console.log('[startup] Initial scrape complete.');
+    return ensureRegistry();
+  })
+  .catch((err) => console.error('[startup] Startup sequence failed:', err.message));
 
 startScheduler();
 
-app.listen(PORT, () => {
-  console.log(`[server] Listening on http://localhost:${PORT}`);
-});
+// Graceful shutdown
+const shutdown = (signal) => () => {
+  console.log(`[server] ${signal} received — shutting down`);
+  server.close(() => {
+    console.log('[server] Shutdown complete');
+    process.exit(0);
+  });
+};
+process.on('SIGTERM', shutdown('SIGTERM'));
+process.on('SIGINT', shutdown('SIGINT'));

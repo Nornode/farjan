@@ -1,5 +1,5 @@
 # Build stage: compile React client
-FROM node:20-alpine AS client-build
+FROM node:20.19-alpine AS client-build
 
 WORKDIR /app/client
 COPY client/package.json ./
@@ -9,7 +9,7 @@ RUN npm run build
 
 
 # Runtime stage: Express server + built client
-FROM node:20-alpine AS server
+FROM node:20.19-alpine AS server
 
 # Set Finland timezone so node-cron fires at the right local time
 ENV TZ=Europe/Helsinki
@@ -30,5 +30,12 @@ COPY --from=client-build /app/client/dist /app/client/dist
 EXPOSE 3000
 
 VOLUME ["/data"]
+
+# Run as non-root user
+RUN addgroup -S ferry && adduser -S -G ferry ferry
+USER ferry
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -qO- http://localhost:3000/api/health || exit 1
 
 CMD ["node", "src/index.js"]

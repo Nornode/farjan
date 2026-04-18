@@ -1,0 +1,8 @@
+node_modules
+.git
+data/
+docs/
+README.md
+*.md
+.DS_Store
+rebuild.sh

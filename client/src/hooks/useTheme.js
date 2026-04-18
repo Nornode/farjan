@@ -13,10 +13,10 @@ export function useTheme() {
     const root = document.documentElement;
     if (dark) {
       root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      try { localStorage.setItem('theme', 'dark'); } catch { /* ignore */ }
     } else {
       root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      try { localStorage.setItem('theme', 'light'); } catch { /* ignore */ }
     }
   }, [dark]);
 

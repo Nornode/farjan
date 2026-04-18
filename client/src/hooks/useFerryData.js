@@ -9,18 +9,25 @@ export function useFerryData(slug) {
   const refetch = useCallback(() => setFetchCount((n) => n + 1), []);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
 
     const url = slug ? `/api/timetable/${slug}` : '/api/timetable';
 
-    fetch(url)
-      .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
-      .then((json) => { if (!cancelled) { setData(json); setError(null); } })
-      .catch((err) => { if (!cancelled) setError(err.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+    fetch(url, { signal: controller.signal })
+      .then(async (res) => {
+        if (!res.ok) {
+          let detail = `HTTP ${res.status}`;
+          try { const body = await res.json(); if (body?.error) detail = body.error; } catch { /* ignore */ }
+          throw new Error(detail);
+        }
+        return res.json();
+      })
+      .then((json) => { setData(json); setError(null); })
+      .catch((err) => { if (err.name !== 'AbortError') setError(err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
 
-    return () => { cancelled = true; };
+    return () => controller.abort();
   }, [slug, fetchCount]);
 
   return { data, error, loading, refetch };

@@ -24,7 +24,7 @@ docker run -d \
   --restart unless-stopped \
   -p "${PORT}:3000" \
   -v "${DATA_DIR}:/data" \
-  -e TZ=Europe/Helsinki \
+  -e TZ="${TZ:-Europe/Helsinki}" \
   "$NAME"
 
 echo ""

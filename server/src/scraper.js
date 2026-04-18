@@ -2,8 +2,8 @@ import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
 import fs from 'fs';
 import path from 'path';
+import { DATA_DIR, SCRAPER_TIMEOUT_MS } from './config.js';
 
-const DATA_DIR = process.env.DATA_DIR || '/data';
 const TIMETABLE_PATH = path.join(DATA_DIR, 'timetable.json');
 const MAIN_URL =
   'https://www.finferries.fi/sv/farjetrafik/farjplatserna-och-tidtabellerna/skaldo.html';
@@ -23,7 +23,7 @@ export function ensureDataDir() {
 export async function fetchHtml(url) {
   const res = await fetch(url, {
     headers: { 'User-Agent': 'farjan-timetable-bot/1.0' },
-    timeout: 15000,
+    timeout: SCRAPER_TIMEOUT_MS,
   });
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
   return res.text();
@@ -132,20 +132,6 @@ export async function scrapeTimetableUrl(url) {
     },
     timetables,
   };
-}
-
-/**
- * Quick check: does this URL have any departure data?
- * Returns true/false without throwing.
- */
-export async function hasDepartures(url) {
-  try {
-    const html = await fetchHtml(url);
-    const $ = cheerio.load(html);
-    return $('ul.pick_ferry_line__detail_window__times li').length > 0;
-  } catch {
-    return false;
-  }
 }
 
 // ---------------------------------------------------------------------------

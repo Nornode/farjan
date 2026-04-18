@@ -2,15 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import * as cheerio from 'cheerio';
 import { fetchHtml, parseTimetablePage, ensureDataDir } from './scraper.js';
+import { DATA_DIR, REGISTRY_TTL_MS, VERIFY_CONCURRENCY } from './config.js';
 
-const DATA_DIR = process.env.DATA_DIR || '/data';
 const REGISTRY_PATH = path.join(DATA_DIR, 'ferries.json');
 const MAIN_URL = 'https://www.finferries.fi/sv/farjetrafik/farjplatserna-och-tidtabellerna.html';
-
-const REGISTRY_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-
-// Concurrent fetch limit when verifying ferry timetables exist
-const VERIFY_CONCURRENCY = 5;
 
 /**
  * Detect day-of-week / season pattern from a timetable URL slug.

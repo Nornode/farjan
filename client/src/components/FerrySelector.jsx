@@ -4,17 +4,22 @@ export default function FerrySelector({ ferries, selectedFerry, setFerry, loadin
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click or Escape
   useEffect(() => {
     if (!open) return;
     function onClickOutside(e) {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     }
+    function onKeyDown(e) {
+      if (e.key === 'Escape') setOpen(false);
+    }
     document.addEventListener('mousedown', onClickOutside);
     document.addEventListener('touchstart', onClickOutside);
+    document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('mousedown', onClickOutside);
       document.removeEventListener('touchstart', onClickOutside);
+      document.removeEventListener('keydown', onKeyDown);
     };
   }, [open]);
 

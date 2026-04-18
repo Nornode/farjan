@@ -16,9 +16,10 @@ export default function MainCountdown({ selectedSlug }) {
   if (error || !data) {
     return (
       <div className="flex-1 flex items-center justify-center px-6">
-        <div className="text-center">
+        <div className="text-center space-y-1">
           <p className="text-red-500 font-semibold text-sm">Kunde inte hämta tidtabell</p>
-          <p className="text-gray-400 text-xs mt-1">{error}</p>
+          {error && <p className="text-gray-500 dark:text-slate-400 text-xs">{error}</p>}
+          <p className="text-gray-400 dark:text-slate-500 text-xs">Kontrollera anslutningen eller försök igen senare.</p>
         </div>
       </div>
     );

@@ -39,9 +39,9 @@ function DeparturePills({ departures }) {
   }
   return (
     <div className="flex flex-wrap gap-1.5">
-      {departures.map((dep) => (
+      {departures.map((dep, i) => (
         <span
-          key={dep}
+          key={`${dep}-${i}`}
           className="text-xs border border-ferry-border dark:border-slate-600 text-ferry-navy dark:text-slate-300 rounded px-1.5 py-0.5 font-mono"
         >
           {dep}
@@ -105,7 +105,7 @@ export default function Metadata({ selectedSlug, selectedFerry }) {
         {metadata?.breaks?.length ? (
           <ul className="space-y-1">
             {metadata.breaks.map((b, i) => (
-              <li key={i} className="text-sm">
+              <li key={`${b.start}-${b.end}`} className="text-sm">
                 <span className="inline-block bg-ferry-light dark:bg-slate-700 text-ferry-navy dark:text-slate-100 rounded px-2 py-0.5">
                   {b.start}–{b.end}
                 </span>
