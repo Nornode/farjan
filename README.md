@@ -2,20 +2,28 @@
 
 Self-hosted ferry timetable checker for all Finnish public ferries. Scrapes [finferries.fi](https://www.finferries.fi), caches timetables locally, and shows a live departure countdown for any available ferry route.
 
+<p align="center">
+  <img src="docs/main-page-dark.png" alt="Countdown view" width="48%" />
+  &nbsp;
+  <img src="docs/metadata-light.png" alt="Info view" width="48%" />
+</p>
+
 > **Keywords:** Finnish ferry timetable · Finferries · Skåldö · Skärgård · färjetrafik · färja tidtabell · lauttaaikataulu · saaristoliikenteen aikataulu · self-hosted · open source · departure countdown · React · Docker · Node.js
 
 ---
 
 ## Table of contents
 
-- [Quick start](#quick-start)
-- [Features](#features)
-- [Configuration](#configuration)
-- [Persistent data](#persistent-data)
-- [Disclaimer](#disclaimer)
-- [Docs](#docs)
-- [På svenska](#på-svenska)
-- [Suomeksi](#suomeksi)
+- [Färjan](#färjan)
+  - [Table of contents](#table-of-contents)
+  - [Quick start](#quick-start)
+  - [Features](#features)
+  - [Configuration](#configuration)
+  - [Persistent data](#persistent-data)
+  - [Disclaimer](#disclaimer)
+  - [Docs](#docs)
+  - [På svenska](#på-svenska)
+  - [Suomeksi](#suomeksi)
 
 ---
 
