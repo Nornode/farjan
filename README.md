@@ -80,7 +80,7 @@ This project is an **independent, non-commercial tool** with no affiliation to [
 
 Developed entirely by AI — [Claude (claude-sonnet-4-6)](https://www.anthropic.com) by Anthropic, using [Claude Code](https://claude.ai/code).
 
-Source: [github.com/Nornode](https://github.com/Nornode)
+Source: [github.com/Nornode/farjan](https://github.com/Nornode/farjan)
 
 ---
 

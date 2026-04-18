@@ -103,11 +103,14 @@ Triggers an immediate re-scrape of the Skåldö timetable and returns the new da
 
 ---
 
-## Scheduled updates
+## Data freshness and scheduled updates
 
-| Schedule | Action |
-|----------|--------|
-| Daily at 01:07 Helsinki time | Re-scrape Skåldö, update `timetable.json` and its slug cache |
-| Monday at 01:15 Helsinki time | Rebuild ferry registry, re-verify all ferry URLs |
+Timetable data is served from local cache files. finferries.fi is **not contacted on every request** — network calls are kept to the minimum needed to stay up to date.
 
-Individual per-ferry timetables (non-Skåldö) are only refreshed when requested and the cache is older than 24 h.
+| Cache file | TTL | Refreshed by |
+|------------|-----|-------------|
+| `data/timetables/<slug>.json` | 24 h | First request after TTL expires, or daily cron for Skåldö |
+| `data/timetable.json` | 24 h | Daily cron at **01:07** Helsinki time |
+| `data/ferries.json` | 7 days | Weekly cron on **Monday at 01:15** Helsinki time, or startup if missing |
+
+A ferry that is never selected by any user is **never scraped**. The weekly registry rebuild verifies all ~15 known routes (one request each) to detect new or removed ferries.

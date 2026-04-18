@@ -66,29 +66,60 @@ färjan/
 
 ---
 
-## How the scraper works
+## How scraping and caching works
 
-1. **Ferry registry** (`ferryRegistry.js`)
-   - Fetches the main finferries.fi listing page
-   - Finds every `<a data-timetable-url="...">` element — each element is one logical ferry; the attribute may contain comma-separated URLs for weekday/weekend variants
-   - Verifies each URL by checking that the timetable page contains departures in **both** directions (island ↔ mainland); single-direction or empty pages are discarded
-   - Saves verified ferries to `ferries.json`; rebuilt every 7 days
+The app is designed to be a **polite, low-frequency consumer** of finferries.fi. The vast majority of requests are served entirely from local cache files — finferries.fi is contacted as rarely as possible.
 
-2. **Timetable pages** (`scraper.js → parseTimetablePage`)
-   - Each ferry has one or more static sub-pages (no JavaScript rendering needed)
-   - Departure times are in `<ul class="pick_ferry_line__detail_window__times"><li>HH:MM</li>…`
-   - Terminals are identified from the preceding `<h4>` heading — headings containing `saari`/`ö)` map to `island`; `mantere`/`fastland` map to `mainland`
-   - Break periods are parsed from a `<p>` element containing *Tauot / Pauser / Breaks*
-   - Validity date comes from `.effective_header`
+### Three layers of caching
 
-3. **Timetable cache** (`timetableCache.js`)
-   - Checks `data/timetables/<slug>.json`; serves it if less than 24 h old
-   - If the Skåldö startup scrape already wrote a matching file, it is used immediately (no redundant fetch)
-   - Otherwise scrapes live and writes the file
+```
+Browser request
+      │
+      ▼
+ timetableCache.js
+      │
+      ├─ slug file exists and < 24 h old? ──► return file immediately (no network call)
+      │
+      ├─ slug matches legacy timetable.json and < 24 h old? ──► seed file, return immediately
+      │
+      └─ stale or missing ──► scrape finferries.fi once, write file, return
+```
 
----
+1. **Per-ferry timetable cache** — `data/timetables/<slug>.json`
+   - Written the first time a ferry is requested, or after the daily Skåldö refresh.
+   - Served as-is for **24 hours** before a new scrape is triggered.
+   - A ferry you never select is **never scraped**.
 
-## Ferry selector (client)
+2. **Skåldö legacy file** — `data/timetable.json`
+   - Refreshed once per day at **01:07** Helsinki time via cron.
+   - On startup the server also writes this data into the slug cache so the first page load for Skåldö never requires an extra network call.
+
+3. **Ferry registry** — `data/ferries.json`
+   - Built once at startup if the file is missing or older than 7 days.
+   - Otherwise loaded from disk — no network call.
+   - Rebuilt automatically every **Monday at 01:15** Helsinki time.
+
+### What this means in practice
+
+| Event | Network calls to finferries.fi |
+|-------|-------------------------------|
+| Normal page load | **0** — all data served from cache |
+| First request for a new ferry | **1** — timetable page for that ferry only |
+| Daily cron at 01:07 | **1** — Skåldö timetable page only |
+| Weekly cron on Monday | **~15–20** — one per verified ferry, to check they still have data |
+| Registry missing on startup | **~50–100** — full discovery scan, happens once per week at most |
+
+The app never polls or re-fetches in the background between these scheduled events.
+
+### How the HTML is parsed
+
+Each finferries.fi timetable page is a **static HTML page** — no JavaScript rendering or API needed.
+
+- Departure times live in `<ul class="pick_ferry_line__detail_window__times"><li>HH:MM</li>…`
+- The terminal name comes from the `<h4>` heading before each list — headings containing `saari`/`ö)` map to `island`; `mantere`/`fastland` map to `mainland`
+- Break periods are parsed from a `<p>` element containing *Tauot / Pauser / Breaks*
+- Validity date comes from `.effective_header`
+- The list of all ferry routes is found on the main listing page via `<a data-timetable-url="...">` elements — each element is one logical ferry; comma-separated URLs in the attribute are weekday/weekend variants of the same route
 
 `useFerrySelector` (in `App.jsx`) fetches `/api/ferries` once on mount and stores the selected ferry ID in `localStorage` under the key `farjan_ferry`. Skåldö (`skaldo`) is the default.
 
