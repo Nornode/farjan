@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 
 const VISIT_COUNT_KEY = 'visitCount';
-const DISMISSED_KEY = 'installPromptDismissed';
+const DISMISSED_MILESTONES_KEY = 'installPromptDismissedMilestones';
 const PROMPT_VISITS = new Set([3, 10, 20, 50]);
 
 function isStandalone() {
@@ -25,17 +25,19 @@ function setVisitCount(count) {
   } catch { /* ignore */ }
 }
 
-function isDismissed() {
+function getDismissedMilestones() {
   try {
-    return localStorage.getItem(DISMISSED_KEY) === 'true';
+    return new Set(JSON.parse(localStorage.getItem(DISMISSED_MILESTONES_KEY) || '[]'));
   } catch {
-    return false;
+    return new Set();
   }
 }
 
-function setDismissed() {
+function setDismissedMilestone(milestone) {
   try {
-    localStorage.setItem(DISMISSED_KEY, 'true');
+    const milestones = getDismissedMilestones();
+    milestones.add(milestone);
+    localStorage.setItem(DISMISSED_MILESTONES_KEY, JSON.stringify([...milestones]));
   } catch { /* ignore */ }
 }
 
@@ -44,17 +46,19 @@ export function useInstallPrompt() {
   const [shouldShowPrompt, setShouldShowPrompt] = useState(false);
   const [isIos, setIsIos] = useState(false);
   const [visitCount, setVisitCountState] = useState(0);
+  const installed = isStandalone();
 
   useEffect(() => {
     // Never prompt if already running as installed PWA
-    if (isStandalone()) return;
+    if (installed) return;
 
     // Increment visit count on each page load
     const newCount = getVisitCount() + 1;
     setVisitCount(newCount);
     setVisitCountState(newCount);
 
-    if (isDismissed() || !PROMPT_VISITS.has(newCount)) return;
+    // Show if this visit is a milestone and has not been dismissed yet
+    if (!PROMPT_VISITS.has(newCount) || getDismissedMilestones().has(newCount)) return;
 
     // Detect iOS Safari (no beforeinstallprompt support)
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -73,7 +77,7 @@ export function useInstallPrompt() {
   }, []);
 
   function dismiss() {
-    setDismissed();
+    setDismissedMilestone(visitCount);
     setShouldShowPrompt(false);
   }
 
@@ -83,10 +87,10 @@ export function useInstallPrompt() {
     const { outcome } = await deferredPrompt.current.userChoice;
     deferredPrompt.current = null;
     if (outcome === 'accepted') {
-      setDismissed();
+      setDismissedMilestone(visitCount);
     }
     setShouldShowPrompt(false);
   }
 
-  return { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall };
+  return { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall, isInstalled: installed };
 }
