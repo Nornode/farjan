@@ -56,16 +56,24 @@ Opens at **http://localhost:3000**. The script stops any existing container, bui
 
 ## Configuration
 
-| Variable   | Default           | Description                         |
-|------------|-------------------|-------------------------------------|
-| `PORT`     | `3000`            | HTTP port the server listens on     |
-| `DATA_DIR` | `/data`           | Path to the persistent data volume  |
-| `TZ`       | `Europe/Helsinki` | Timezone used by the cron scheduler |
+| Variable           | Default           | Description                                                                          |
+|--------------------|-------------------|--------------------------------------------------------------------------------------|
+| `PORT`             | `3000`            | HTTP port the server listens on                                                      |
+| `DATA_DIR`         | `/data`           | Path to the persistent data volume                                                   |
+| `TZ`               | `Europe/Helsinki` | Timezone used by the cron scheduler                                                  |
+| `ANALYTICS_TOKEN`  | _(unset)_         | Secret token to access the analytics dashboard; if unset, analytics API is disabled  |
+| `LOG_ANALYTICS`    | `true`            | Set to `false` to disable event recording entirely                                   |
 
-Set variables in `docker-compose.yml` or pass them to `docker run -e`.
+Set variables in `docker-compose.yml` or pass them to `rebuild.sh` / `docker run -e`.
 
 ```bash
 PORT=8080 ./rebuild.sh
+
+# Enable the analytics dashboard
+ANALYTICS_TOKEN=your-strong-secret ./rebuild.sh
+
+# Disable analytics event recording
+LOG_ANALYTICS=false ./rebuild.sh
 ```
 
 ---
@@ -79,8 +87,30 @@ All state lives in `./data` (bind-mounted into the container at `/data`).
 | `timetable.json` | Daily 01:07 | Skåldö timetable (legacy, kept for compatibility) |
 | `ferries.json` | Monday 01:15 | Registry of all verified ferry routes |
 | `timetables/<slug>.json` | On first request, then every 24 h | Per-ferry timetable cache |
+| `analytics.jsonl` | On every page/ferry request | Hashed-IP analytics events (rotated weekly, 90-day retention) |
 
 The container is stateless — delete any file to force a fresh scrape on next startup or request.
+
+---
+
+## Analytics dashboard
+
+When `ANALYTICS_TOKEN` is set, a private analytics dashboard becomes available at `/analytics`. It is not linked from the public UI.
+
+**Enable it:**
+```bash
+ANALYTICS_TOKEN=your-strong-secret ./rebuild.sh
+```
+
+Or uncomment the relevant line in `docker-compose.yml` and set `ANALYTICS_TOKEN` in your shell or `.env` file.
+
+**Access it:**
+Navigate to `http://localhost:3000/analytics` and enter the token. The session is stored in `sessionStorage` (clears when the browser tab is closed).
+
+**Privacy:**
+- Only hashed (SHA-256) IP addresses are stored — never raw IPs.
+- No cookies, no third-party scripts, no external calls.
+- To disable recording entirely, set `LOG_ANALYTICS=false`.
 
 ---
 

@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { runScraper } from './scraper.js';
 import { buildRegistry } from './ferryRegistry.js';
+import { rotateAnalyticsLog } from './analytics.js';
 
 export function startScheduler() {
   // Daily Skåldö timetable refresh at 01:07 AM Helsinki time
@@ -25,5 +26,11 @@ export function startScheduler() {
     }
   });
 
-  console.log('[scheduler] Daily timetable update at 01:07, weekly registry rebuild at Mon 01:15 (Helsinki time)');
+  // Weekly analytics log rotation at 01:20 AM Helsinki time on Mondays
+  cron.schedule('20 1 * * 1', async () => {
+    console.log('[scheduler] Weekly analytics log rotation triggered');
+    rotateAnalyticsLog();
+  });
+
+  console.log('[scheduler] Daily timetable update at 01:07, weekly registry rebuild at Mon 01:15, analytics rotation at Mon 01:20 (Helsinki time)');
 }

@@ -5,6 +5,7 @@ import { runScraper } from '../scraper.js';
 import { loadRegistry, isRegistryFresh } from '../ferryRegistry.js';
 import { getTimetable } from '../timetableCache.js';
 import { DATA_DIR } from '../config.js';
+import { recordFerryView, aggregateAnalytics } from '../analytics.js';
 
 const router = express.Router();
 const TIMETABLE_PATH = path.join(DATA_DIR, 'timetable.json');
@@ -39,6 +40,7 @@ router.get('/timetable/:slug', async (req, res) => {
   }
   try {
     const data = await getTimetable(slug);
+    recordFerryView(slug, req);
     res.setHeader('Cache-Control', 'no-cache');
     res.json(data);
   } catch (err) {
@@ -94,6 +96,27 @@ router.post('/refresh', async (req, res) => {
   } catch (err) {
     console.error('[api] POST /refresh error:', err.message);
     res.status(500).json({ ok: false, error: 'Refresh failed' });
+  }
+});
+
+// Protected analytics endpoint — requires Authorization: Bearer <ANALYTICS_TOKEN>
+router.get('/analytics', (req, res) => {
+  const token = process.env.ANALYTICS_TOKEN;
+  if (!token) {
+    return res.status(503).json({ error: 'Analytics endpoint is disabled (ANALYTICS_TOKEN not set)' });
+  }
+  const authHeader = req.headers['authorization'] ?? '';
+  const provided = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+  if (provided !== token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const data = aggregateAnalytics();
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(data);
+  } catch (err) {
+    console.error('[api] GET /analytics error:', err.message);
+    res.status(500).json({ error: 'Failed to aggregate analytics' });
   }
 });
 
