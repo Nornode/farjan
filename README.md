@@ -1,5 +1,7 @@
 # Färjan
 
+🌐 **Live demo: [farjan.lagus.net](https://farjan.lagus.net/)**
+
 Self-hosted ferry timetable checker for all Finnish public ferries. Scrapes [finferries.fi](https://www.finferries.fi), caches timetables locally, and shows a live departure countdown for any available ferry route.
 
 <p align="center">
