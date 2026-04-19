@@ -8,6 +8,7 @@ import Analytics from './pages/Analytics.jsx';
 import { useTheme } from './hooks/useTheme.js';
 import { useFerrySelector } from './hooks/useFerrySelector.js';
 import { useInstallPrompt } from './hooks/useInstallPrompt.js';
+import { useAnalyticsBeacon } from './hooks/useAnalyticsBeacon.js';
 import { normalizeToFerryId } from './utils/swedishVariants.js';
 
 function ErrorFallback() {
@@ -57,6 +58,7 @@ export default function App() {
   const { dark, toggle } = useTheme();
   const { ferries, loading: ferriesLoading, selectedFerry, selectedSlug, setFerry } = useFerrySelector();
   const { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall, isInstalled } = useInstallPrompt();
+  useAnalyticsBeacon();
 
   return (
     <BrowserRouter>
