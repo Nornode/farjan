@@ -52,8 +52,20 @@ fi
 # Regenerate sitemap from current ferries registry
 step "Regenerating sitemap.xml from ferry registry..."
 cd "$(dirname "$0")"
-node scripts/generate-sitemap.js || { fail "Sitemap generation failed"; exit 1; }
-ok "Sitemap regenerated."
+
+# Check if data/ferries.json exists
+if [ -f "data/ferries.json" ]; then
+  # Create a temporary container just to run the sitemap generator
+  docker run --rm \
+    -v "$(pwd)/data:/data" \
+    -v "$(pwd)/scripts:/scripts" \
+    -v "$(pwd)/client/public:/public" \
+    node:20-alpine \
+    sh -c "cd /scripts && node generate-sitemap.js" || { fail "Sitemap generation failed"; exit 1; }
+  ok "Sitemap regenerated."
+else
+  skip "data/ferries.json not found - sitemap will be generated during Docker build"
+fi
 echo ""
 
 # Hash all files that affect the image build
