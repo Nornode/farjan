@@ -49,6 +49,13 @@ if [ -z "$ANALYTICS_TOKEN" ]; then
   fi
 fi
 
+# Regenerate sitemap from current ferries registry
+step "Regenerating sitemap.xml from ferry registry..."
+cd "$(dirname "$0")"
+node scripts/generate-sitemap.js || { fail "Sitemap generation failed"; exit 1; }
+ok "Sitemap regenerated."
+echo ""
+
 # Hash all files that affect the image build
 SOURCE_HASH=$(find Dockerfile client/ server/ -type f | sort | xargs sha256sum | sha256sum | awk '{print $1}')
 

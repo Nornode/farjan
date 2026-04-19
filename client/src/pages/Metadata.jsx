@@ -1,4 +1,7 @@
+import { Helmet } from 'react-helmet-async';
+import { useParams } from 'react-router-dom';
 import { useFerryData } from '../hooks/useFerryData.js';
+import { useFerrySelector } from '../hooks/useFerrySelector.js';
 
 function formatLocalTime(isoString, timezone = 'Europe/Helsinki') {
   if (!isoString) return '–';
@@ -52,7 +55,17 @@ function DeparturePills({ departures }) {
 }
 
 export default function Metadata({ selectedSlug, selectedFerry, isIos, onInstall, isInstalled }) {
+  const { ferrySlug } = useParams();
+  const { selectedFerry: selectedFerryFromHook } = useFerrySelector();
   const { data, error, loading, refetch } = useFerryData(selectedSlug);
+
+  // Use ferry from hook if available, fallback to prop
+  const ferry = selectedFerryFromHook || selectedFerry;
+  const ferryName = ferry?.name ?? 'Okänd färja';
+  const ferryId = ferrySlug || 'skaldo';
+  const title = `${ferryName} – Info`;
+  const description = `Detaljerad information om ${ferryName} färjans tidtabell och avgångar via Finferries.`;
+  const canonicalUrl = `https://farjan.lagus.net/${ferryId}/metadata`;
 
   if (loading) {
     return (
@@ -71,12 +84,20 @@ export default function Metadata({ selectedSlug, selectedFerry, isIos, onInstall
   }
 
   const { metadata, timetables } = data;
-  const ferryName = selectedFerry?.name ?? 'Okänd färja';
   const islandLocation = timetables?.island?.location ?? 'Ö';
   const mainlandLocation = timetables?.mainland?.location ?? 'Fastland';
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-4 max-w-lg mx-auto w-full">
+    <>
+      <Helmet>
+        <title>{title}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonicalUrl} />
+      </Helmet>
+      <div className="flex-1 overflow-y-auto px-4 py-4 max-w-lg mx-auto w-full">
 
       <Section title="Om tjänsten">
         {isInstalled ? (
@@ -170,5 +191,6 @@ export default function Metadata({ selectedSlug, selectedFerry, isIos, onInstall
         </button>
       </div>
     </div>
+    </>
   );
 }

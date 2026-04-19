@@ -1,9 +1,20 @@
+import { Helmet } from 'react-helmet-async';
+import { useParams } from 'react-router-dom';
 import { useFerryData } from '../hooks/useFerryData.js';
+import { useFerrySelector } from '../hooks/useFerrySelector.js';
 import Countdown from '../components/Countdown.jsx';
 import Disclaimer from '../components/Disclaimer.jsx';
 
 export default function MainCountdown({ selectedSlug, isIos, onInstall, isInstalled }) {
+  const { ferrySlug } = useParams();
+  const { selectedFerry } = useFerrySelector();
   const { data, error, loading } = useFerryData(selectedSlug);
+
+  const ferryName = selectedFerry?.name || 'Färja';
+  const ferryId = ferrySlug || 'skaldo';
+  const title = `${ferryName} – Färja tidtabell`;
+  const description = `Live avgångstider för ${ferryName} via Finferries. Reaaliaikaiset lähtöajat ${ferryName}:lle.`;
+  const canonicalUrl = `https://farjan.lagus.net/${ferryId}`;
 
   if (loading) {
     return (
@@ -53,35 +64,45 @@ export default function MainCountdown({ selectedSlug, isIos, onInstall, isInstal
     : { pre: 'Från', main: mainland?.location ?? 'fastlandet', post: 'om' };
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col">
-      {/* Two horizontal rows, one per terminal */}
-      <div className="flex flex-col flex-1 min-h-0 divide-y divide-ferry-border dark:divide-slate-700">
-        <Countdown
-          label={islandLabel}
-          departures={island?.departures}
-          breaks={breaks}
-        />
-        <Countdown
-          label={mainlandLabel}
-          departures={mainland?.departures}
-          breaks={breaks}
-        />
-      </div>
-
-      {/* Footer: last update · disclaimer · validity */}
-      <div className="border-t border-ferry-border dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 px-4 py-2 grid grid-cols-3 items-center">
-        <p className="text-xs text-gray-400 dark:text-slate-500 truncate">
-          {lastUpdated ? `Uppdaterad ${lastUpdated}` : ''}
-        </p>
-        <div className="flex justify-center">
-          <Disclaimer isIos={isIos} onInstall={onInstall} isInstalled={isInstalled} />
+    <>
+      <Helmet>
+        <title>{title}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonicalUrl} />
+      </Helmet>
+      <div className="flex-1 min-h-0 flex flex-col">
+        {/* Two horizontal rows, one per terminal */}
+        <div className="flex flex-col flex-1 min-h-0 divide-y divide-ferry-border dark:divide-slate-700">
+          <Countdown
+            label={islandLabel}
+            departures={island?.departures}
+            breaks={breaks}
+          />
+          <Countdown
+            label={mainlandLabel}
+            departures={mainland?.departures}
+            breaks={breaks}
+          />
         </div>
-        <p className="text-xs truncate text-right">
-          {metadata?.scraperStatus === 'error'
-            ? <span className="text-red-400">Skrapning misslyckades</span>
-            : <span className="text-gray-400 dark:text-slate-500">{metadata?.validityFrom ? `Giltig fr.o.m. ${metadata.validityFrom}` : ''}</span>}
-        </p>
+
+        {/* Footer: last update · disclaimer · validity */}
+        <div className="border-t border-ferry-border dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 px-4 py-2 grid grid-cols-3 items-center">
+          <p className="text-xs text-gray-400 dark:text-slate-500 truncate">
+            {lastUpdated ? `Uppdaterad ${lastUpdated}` : ''}
+          </p>
+          <div className="flex justify-center">
+            <Disclaimer isIos={isIos} onInstall={onInstall} isInstalled={isInstalled} />
+          </div>
+          <p className="text-xs truncate text-right">
+            {metadata?.scraperStatus === 'error'
+              ? <span className="text-red-400">Skrapning misslyckades</span>
+              : <span className="text-gray-400 dark:text-slate-500">{metadata?.validityFrom ? `Giltig fr.o.m. ${metadata.validityFrom}` : ''}</span>}
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

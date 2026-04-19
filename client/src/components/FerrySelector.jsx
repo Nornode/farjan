@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
-export default function FerrySelector({ ferries, selectedFerry, setFerry, loading }) {
+export default function FerrySelector({ ferries, selectedFerry, loading }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const navigate = useNavigate();
+  const { ferrySlug } = useParams();
 
   // Close dropdown on outside click or Escape
   useEffect(() => {
@@ -24,6 +27,14 @@ export default function FerrySelector({ ferries, selectedFerry, setFerry, loadin
   }, [open]);
 
   const displayName = selectedFerry?.name ?? (loading ? '…' : 'Välj färja');
+
+  const handleSelectFerry = (ferryId) => {
+    // Store preference in localStorage
+    try { localStorage.setItem('farjan_ferry', ferryId); } catch { /* ignore */ }
+    // Navigate to ferry route
+    navigate(`/${ferryId}`);
+    setOpen(false);
+  };
 
   return (
     <div ref={ref} className="relative">
@@ -54,7 +65,7 @@ export default function FerrySelector({ ferries, selectedFerry, setFerry, loadin
                   key={ferry.id}
                   role="option"
                   aria-selected={isSelected}
-                  onClick={() => { setFerry(ferry.id); setOpen(false); }}
+                  onClick={() => handleSelectFerry(ferry.id)}
                   className={`w-full text-left px-4 py-2.5 text-sm transition-colors
                     ${isSelected
                       ? 'bg-ferry-blue/10 dark:bg-blue-900/30 text-ferry-navy dark:text-blue-300 font-semibold'

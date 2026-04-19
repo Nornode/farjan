@@ -5,18 +5,203 @@
     <loc>https://farjan.lagus.net/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/"/>
-    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://farjan.lagus.net/"/>
   </url>
   <url>
-    <loc>https://farjan.lagus.net/metadata</loc>
+    <loc>https://farjan.lagus.net/barosund</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/metadata"/>
-    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/metadata"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/metadata"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://farjan.lagus.net/metadata"/>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/barosund"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/barösund"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/barösund"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/barösund"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/barosund"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/barösund</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="canonical" href="https://farjan.lagus.net/barosund"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/hogsara</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/hogsara"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/högsåra"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/högsåra"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/högsåra"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/hogsara"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/högsåra</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="canonical" href="https://farjan.lagus.net/hogsara"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/inio-gustavs</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/inio-gustavs"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/iniö-gustavs"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/iniö-gustavs"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/iniö-gustavs"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/inio-gustavs"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/iniö-gustavs</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="canonical" href="https://farjan.lagus.net/inio-gustavs"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/karlo-hailuoto</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/karlo-hailuoto"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/karlö-hailuoto"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/karlö-hailuoto"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/karlö-hailuoto"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/karlo-hailuoto"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/karlö-hailuoto</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="canonical" href="https://farjan.lagus.net/karlo-hailuoto"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/kasnas-hitis-aurora</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/kasnas-hitis-aurora"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/kasnäs-hitis-aurora"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/kasnäs-hitis-aurora"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/kasnäs-hitis-aurora"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/kasnas-hitis-aurora"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/kasnäs-hitis-aurora</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="canonical" href="https://farjan.lagus.net/kasnas-hitis-aurora"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/keistio</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/keistio"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/keistiö"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/keistiö"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/keistiö"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/keistio"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/keistiö</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="canonical" href="https://farjan.lagus.net/keistio"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/nagu-korpo</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/nagu-korpo"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/nagu-korpo"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/nagu-korpo"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/nagu-korpo"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/nagu-korpo"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/palva</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/palva"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/palva"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/palva"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/palva"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/palva"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/pargas-nagu</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/pargas-nagu"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/pargas-nagu"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/pargas-nagu"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/pargas-nagu"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/pargas-nagu"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/pellinge</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/pellinge"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/pellinge"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/pellinge"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/pellinge"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/pellinge"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/puutossalmi</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/puutossalmi"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/puutossalmi"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/puutossalmi"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/puutossalmi"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/puutossalmi"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/skaldo</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/skaldo"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/skåldö"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/skåldö"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/skåldö"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/skaldo"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/skåldö</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="canonical" href="https://farjan.lagus.net/skaldo"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/skargardens-ringvag-houtskar-inio</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/skargardens-ringvag-houtskar-inio"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/skärgårdens-ringväg-houtskär-iniö"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/skärgårdens-ringväg-houtskär-iniö"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/skärgårdens-ringväg-houtskär-iniö"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/skargardens-ringvag-houtskar-inio"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/skärgårdens-ringväg-houtskär-iniö</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="canonical" href="https://farjan.lagus.net/skargardens-ringvag-houtskar-inio"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/vartsala</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/vartsala"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/vartsala"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/vartsala"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/vartsala"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/vartsala"/>
+  </url>
+  <url>
+    <loc>https://farjan.lagus.net/velkuanmaa</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://farjan.lagus.net/velkuanmaa"/>
+    <xhtml:link rel="alternate" hreflang="sv-SE" href="https://farjan.lagus.net/velkuanmaa"/>
+    <xhtml:link rel="alternate" hreflang="sv-FI" href="https://farjan.lagus.net/velkuanmaa"/>
+    <xhtml:link rel="alternate" hreflang="fi" href="https://farjan.lagus.net/velkuanmaa"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://farjan.lagus.net/velkuanmaa"/>
   </url>
 </urlset>
