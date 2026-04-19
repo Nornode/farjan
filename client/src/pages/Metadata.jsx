@@ -103,7 +103,21 @@ export default function Metadata({ selectedSlug, selectedFerry, isIos, onInstall
       <Section title="Färja">
         <Row label="Namn" value={ferryName} />
         <Row label="Slug" value={selectedSlug ?? '–'} />
-        <Row label="Tidtabell-URL" value={metadata?.timetableUrl} />
+        <div className="flex flex-wrap gap-x-3 text-sm py-0.5">
+          <span className="text-gray-500 dark:text-slate-400 min-w-[130px]">Tidtabell-URL</span>
+          {metadata?.timetableUrl ? (
+            <a
+              href={metadata.timetableUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium break-all text-ferry-blue dark:text-blue-300 hover:underline"
+            >
+              {metadata.timetableUrl}
+            </a>
+          ) : (
+            <span className="font-medium text-ferry-navy dark:text-slate-100">–</span>
+          )}
+        </div>
       </Section>
 
       <Section title="Skrapning">

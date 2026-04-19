@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /analytics
 
 Sitemap: https://farjan.lagus.net/sitemap.xml

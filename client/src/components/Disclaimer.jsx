@@ -69,7 +69,16 @@ export default function Disclaimer() {
                 Denna tjänst är ett <span className="font-semibold text-ferry-navy dark:text-white">oberoende, icke-kommersiellt projekt</span> utan anknytning till Finferries, Traficom eller finska staten.
               </p>
               <p>
-                Tidtabellsdata hämtas från <span className="font-medium">finferries.fi</span> och kan innehålla fel eller avvikelser. Använd alltid officiella källor för reseplanering. Tjänsten tillhandahålls i befintligt skick utan garantier av något slag.
+                Tidtabellsdata hämtas från{' '}
+                <a
+                  href="https://www.finferries.fi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-ferry-blue dark:text-blue-300 hover:underline"
+                >
+                  finferries.fi
+                </a>
+                {' '}och kan innehålla fel eller avvikelser. Använd alltid officiella källor för reseplanering. Tjänsten tillhandahålls i befintligt skick utan garantier av något slag.
               </p>
               <p>
                 Helt utvecklad av AI —{' '}

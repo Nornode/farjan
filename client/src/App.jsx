@@ -47,6 +47,11 @@ export default function App() {
               <Route path="/" element={<MainCountdown selectedSlug={selectedSlug} />} />
               <Route path="/metadata" element={<Metadata selectedSlug={selectedSlug} selectedFerry={selectedFerry} isIos={isIos} onInstall={triggerNativeInstall} isInstalled={isInstalled} />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="*" element={
+                <div className="flex-1 flex items-center justify-center px-6">
+                  <p className="text-gray-400 dark:text-slate-500 text-sm">Sidan hittades inte.</p>
+                </div>
+              } />
             </Routes>
           </ErrorBoundary>
         </main>
