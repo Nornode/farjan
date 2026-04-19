@@ -52,17 +52,18 @@ export function useInstallPrompt() {
     // Never prompt if already running as installed PWA
     if (installed) return;
 
+    // Always detect iOS so install UI elsewhere (e.g. Disclaimer) is correct on every visit
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    setIsIos(ios);
+
     // Increment visit count on each page load
     const newCount = getVisitCount() + 1;
     setVisitCount(newCount);
     setVisitCountState(newCount);
 
-    // Show if this visit is a milestone and has not been dismissed yet
+    // Show banner only at milestones that haven't been dismissed
     if (!PROMPT_VISITS.has(newCount) || getDismissedMilestones().has(newCount)) return;
 
-    // Detect iOS Safari (no beforeinstallprompt support)
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    setIsIos(ios);
     setShouldShowPrompt(true);
   }, []);
 

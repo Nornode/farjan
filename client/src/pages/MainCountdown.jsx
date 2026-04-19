@@ -2,7 +2,7 @@ import { useFerryData } from '../hooks/useFerryData.js';
 import Countdown from '../components/Countdown.jsx';
 import Disclaimer from '../components/Disclaimer.jsx';
 
-export default function MainCountdown({ selectedSlug }) {
+export default function MainCountdown({ selectedSlug, isIos, onInstall, isInstalled }) {
   const { data, error, loading } = useFerryData(selectedSlug);
 
   if (loading) {
@@ -74,7 +74,7 @@ export default function MainCountdown({ selectedSlug }) {
           {lastUpdated ? `Uppdaterad ${lastUpdated}` : ''}
         </p>
         <div className="flex justify-center">
-          <Disclaimer />
+          <Disclaimer isIos={isIos} onInstall={onInstall} isInstalled={isInstalled} />
         </div>
         <p className="text-xs truncate text-right">
           {metadata?.scraperStatus === 'error'

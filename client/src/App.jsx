@@ -44,7 +44,7 @@ export default function App() {
         <main className="flex-1 min-h-0 flex flex-col">
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <Routes>
-              <Route path="/" element={<MainCountdown selectedSlug={selectedSlug} />} />
+              <Route path="/" element={<MainCountdown selectedSlug={selectedSlug} isIos={isIos} onInstall={triggerNativeInstall} isInstalled={isInstalled} />} />
               <Route path="/metadata" element={<Metadata selectedSlug={selectedSlug} selectedFerry={selectedFerry} isIos={isIos} onInstall={triggerNativeInstall} isInstalled={isInstalled} />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="*" element={

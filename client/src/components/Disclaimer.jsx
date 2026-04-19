@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-export default function Disclaimer() {
+export default function Disclaimer({ isIos, onInstall, isInstalled }) {
   const [open, setOpen] = useState(false);
   const closeRef = useRef(null);
 
@@ -86,6 +86,27 @@ export default function Disclaimer() {
                 {' '}av Anthropic, via IDE{' '}
                 <span className="font-medium text-ferry-navy dark:text-white">Claude Code</span>.
               </p>
+
+              <div className="pt-2 border-t border-ferry-border dark:border-slate-700">
+                {isInstalled ? (
+                  <p className="text-sm text-gray-500 dark:text-slate-400">Appen är redan installerad på din enhet.</p>
+                ) : isIos ? (
+                  <p className="text-sm text-gray-600 dark:text-slate-300">
+                    Installera appen: tryck på <span className="font-semibold">Dela</span> i Safari och välj{' '}
+                    <span className="font-semibold">"Lägg till på hemskärmen"</span>.
+                  </p>
+                ) : (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-gray-600 dark:text-slate-300">Lägg till appen på hemskärmen för snabbare åtkomst.</p>
+                    <button
+                      onClick={onInstall}
+                      className="shrink-0 px-3 py-1.5 rounded-full bg-ferry-navy dark:bg-slate-700 text-white text-xs font-semibold hover:bg-ferry-blue dark:hover:bg-slate-600 transition-colors"
+                    >
+                      Installera
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <div className="pt-2 border-t border-ferry-border dark:border-slate-700">
                 <a
