@@ -60,7 +60,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="h-screen flex flex-col bg-ferry-bg dark:bg-slate-900 overflow-hidden transition-colors duration-200">
+      <div className="h-dvh flex flex-col bg-ferry-bg dark:bg-slate-900 overflow-hidden transition-colors duration-200">
         <Nav
           dark={dark}
           onToggleTheme={toggle}

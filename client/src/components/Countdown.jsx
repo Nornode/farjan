@@ -111,8 +111,8 @@ export default function Countdown({ label, departures, breaks }) {
         {upcomingBreak && (
           <p className="text-xs mt-0.5 text-amber-700 dark:text-amber-400 text-center">
             {activeBreak
-              ? `Uppehåll ${upcomingBreak.start}–${upcomingBreak.end}${afterBreakDep ? `, sedan ${afterBreakDep.departure}` : ''}`
-              : `Uppehåll kl. ${upcomingBreak.start}–${upcomingBreak.end}`}
+              ? `Pause mellan ${upcomingBreak.start}–${upcomingBreak.end}${afterBreakDep ? `, sedan ${afterBreakDep.departure}` : ''}`
+              : `Pause mellan ${upcomingBreak.start}–${upcomingBreak.end}`}
           </p>
         )}
 
