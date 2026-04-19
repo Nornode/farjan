@@ -39,9 +39,9 @@ if [ -z "$ANALYTICS_TOKEN" ]; then
     ANALYTICS_TOKEN="$_input_token"
     # Persist to .env for future runs, creating the file if needed
     if grep -q "^ANALYTICS_TOKEN=" "$ENV_FILE" 2>/dev/null; then
-      sed -i "s|^ANALYTICS_TOKEN=.*|ANALYTICS_TOKEN=${ANALYTICS_TOKEN}|" "$ENV_FILE"
+      sed -i "s|^ANALYTICS_TOKEN=.*|ANALYTICS_TOKEN='${ANALYTICS_TOKEN}'|" "$ENV_FILE"
     else
-      echo "ANALYTICS_TOKEN=${ANALYTICS_TOKEN}" >> "$ENV_FILE"
+      echo "ANALYTICS_TOKEN='${ANALYTICS_TOKEN}'" >> "$ENV_FILE"
     fi
     ok "Token saved to .env — future runs will use it automatically."
   else
