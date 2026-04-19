@@ -2,8 +2,8 @@
 FROM node:20.19-alpine AS client-build
 
 WORKDIR /app/client
-COPY client/package.json ./
-RUN npm install
+COPY client/package.json client/package-lock.json ./
+RUN npm ci
 COPY client/ ./
 RUN npm run build
 
@@ -22,8 +22,8 @@ ENV DATA_DIR=/data
 RUN apk add --no-cache tzdata
 
 WORKDIR /app/server
-COPY server/package.json ./
-RUN npm install --omit=dev
+COPY server/package.json server/package-lock.json ./
+RUN npm ci --omit=dev
 
 COPY server/ ./
 
