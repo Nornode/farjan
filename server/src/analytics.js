@@ -24,7 +24,7 @@ function clientIp(req) {
 // Derive device category from User-Agent string — no personal data
 function parseDeviceCategory(ua) {
   if (!ua) return 'unknown';
-  if (/iPad|Android(?!.*Mobile).*(Tablet|Kindle|Silk)|Kindle|Silk/i.test(ua)) return 'tablet';
+  if (/iPad|Kindle|Silk/i.test(ua)) return 'tablet';
   if (/Mobi|iPhone|Android.*Mobile|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return 'mobile';
   return 'desktop';
 }
