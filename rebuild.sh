@@ -59,7 +59,7 @@ if [ -f "data/ferries.json" ]; then
   docker run --rm \
     -v "$(pwd)/data:/data" \
     -v "$(pwd)/scripts:/scripts" \
-    -v "$(pwd)/client/public:/public" \
+    -v "$(pwd)/client/public:/client/public" \
     node:20-alpine \
     sh -c "cd /scripts && node generate-sitemap.js" || { fail "Sitemap generation failed"; exit 1; }
   ok "Sitemap regenerated."
