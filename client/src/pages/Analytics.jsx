@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 const TOKEN_KEY = 'analytics_token';
 
-// ── Simple inline bar chart using CSS flex ──────────────────────────────────
+// ── Daily bar chart (30-day views) ───────────────────────────────────────────
 function BarChart({ data }) {
   if (!data || Object.keys(data).length === 0) {
     return <p className="text-sm text-gray-400">Ingen data</p>;
@@ -33,6 +33,36 @@ function BarChart({ data }) {
         <span>{entries[0]?.[0]}</span>
         <span>{entries[Math.floor(entries.length / 2)]?.[0]}</span>
         <span>{entries[entries.length - 1]?.[0]}</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Generic horizontal-distribution bar chart (hour/DOW/etc.) ───────────────
+function SimpleBarChart({ items, labelKey = 'label', countKey = 'count', tickEvery }) {
+  if (!items?.length) return <p className="text-sm text-gray-400 dark:text-slate-500">Ingen data</p>;
+  const maxVal = Math.max(...items.map((i) => i[countKey]), 1);
+  return (
+    <div className="overflow-x-auto">
+      <div className="flex items-end gap-px h-20 min-w-max">
+        {items.map((item, idx) => {
+          const count = item[countKey];
+          const label = String(item[labelKey]);
+          const heightPct = Math.round((count / maxVal) * 100);
+          const showLabel = !tickEvery || idx % tickEvery === 0;
+          return (
+            <div key={idx} className="flex flex-col items-center" style={{ minWidth: 18 }}>
+              <div
+                className="w-3.5 bg-ferry-blue dark:bg-blue-400 rounded-t transition-all"
+                style={{ height: `${heightPct}%`, minHeight: count > 0 ? 2 : 0 }}
+                title={`${label}: ${count}`}
+              />
+              <span className="text-[9px] text-gray-400 dark:text-slate-500 mt-0.5">
+                {showLabel ? label : ''}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -124,6 +154,9 @@ function LoginForm({ onLogin, error }) {
   );
 }
 
+// EU-style day-of-week order (Mon first)
+const EU_DOW_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
 // ── Dashboard ────────────────────────────────────────────────────────────────
 export default function Analytics() {
   const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY) ?? '');
@@ -182,6 +215,19 @@ export default function Analytics() {
     return <LoginForm onLogin={handleLogin} error={loginError} />;
   }
 
+  // Remap DOW distribution to Mon-first order for display
+  const dowItems = data?.dow_distribution
+    ? EU_DOW_ORDER.map((d) => {
+        const entry = data.dow_distribution.find((x) => x.dow === d);
+        return { label: entry?.name ?? '', count: entry?.count ?? 0 };
+      })
+    : [];
+
+  const hourItems = data?.hour_distribution?.map((e) => ({
+    label: String(e.hour).padStart(2, '0'),
+    count: e.count,
+  })) ?? [];
+
   return (
     <div className="min-h-screen bg-ferry-bg dark:bg-slate-900 text-ferry-navy dark:text-white">
       <div className="max-w-3xl mx-auto px-4 py-6">
@@ -221,11 +267,18 @@ export default function Analytics() {
           <>
             {/* Summary cards */}
             <Section title="Summary">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
                 <Card label="Page views" value={data.summary.total_page_views.toLocaleString()} />
                 <Card label="Ferry views" value={data.summary.total_ferry_views.toLocaleString()} />
                 <Card label="Unique visitors" value={data.summary.total_unique_visitors.toLocaleString()} />
                 <Card label="Top ferry" value={data.summary.most_popular_ferry} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Card label="New visitors" value={data.summary.new_visitors?.toLocaleString()} />
+                <Card label="Returning visitors" value={data.summary.returning_visitors?.toLocaleString()} />
+                {data.summary.total_analytics_views > 0 && (
+                  <Card label="Dashboard loads" value={data.summary.total_analytics_views.toLocaleString()} />
+                )}
               </div>
             </Section>
 
@@ -235,6 +288,32 @@ export default function Analytics() {
               <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-2">
                 Bars represent total page + ferry views per day (Helsinki time).
               </p>
+            </Section>
+
+            {/* Hour-of-day distribution */}
+            <Section title="Hour of day (Helsinki time)">
+              <SimpleBarChart items={hourItems} tickEvery={6} />
+              <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-2">
+                Distribution of visits by hour across all recorded events.
+              </p>
+            </Section>
+
+            {/* Day-of-week distribution */}
+            <Section title="Day of week (Helsinki time)">
+              <SimpleBarChart items={dowItems} />
+            </Section>
+
+            {/* Devices */}
+            <Section title="Devices">
+              <DataTable
+                rows={['mobile', 'desktop', 'tablet', 'unknown']
+                  .map((cat) => ({ category: cat, count: data.devices?.[cat] ?? 0 }))
+                  .filter((r) => r.count > 0)}
+                columns={[
+                  { key: 'category', label: 'Category' },
+                  { key: 'count', label: 'Views' },
+                ]}
+              />
             </Section>
 
             {/* Top ferries */}
@@ -247,6 +326,86 @@ export default function Analytics() {
                 ]}
               />
             </Section>
+
+            {/* Languages */}
+            <Section title="Languages">
+              <DataTable
+                rows={data.languages}
+                columns={[
+                  { key: 'lang', label: 'Language' },
+                  { key: 'count', label: 'Views' },
+                ]}
+              />
+            </Section>
+
+            {/* Referrer domains */}
+            <Section title="Referrer domains">
+              <DataTable
+                rows={data.referrer_domains}
+                columns={[
+                  { key: 'domain', label: 'Domain' },
+                  { key: 'count', label: 'Views' },
+                ]}
+              />
+            </Section>
+
+            {/* Client environment */}
+            {data.client_info && (
+              <Section title="Client environment">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">Viewport width</p>
+                    <DataTable
+                      rows={data.client_info.viewports}
+                      columns={[
+                        { key: 'label', label: 'Bucket' },
+                        { key: 'count', label: 'Count' },
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">Color scheme</p>
+                    <DataTable
+                      rows={data.client_info.color_schemes}
+                      columns={[
+                        { key: 'label', label: 'Scheme' },
+                        { key: 'count', label: 'Count' },
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">Display mode</p>
+                    <DataTable
+                      rows={data.client_info.display_modes}
+                      columns={[
+                        { key: 'label', label: 'Mode' },
+                        { key: 'count', label: 'Count' },
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">Connection type</p>
+                    <DataTable
+                      rows={data.client_info.connection_types}
+                      columns={[
+                        { key: 'label', label: 'Type' },
+                        { key: 'count', label: 'Count' },
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">Page load time (DCL)</p>
+                    <DataTable
+                      rows={data.client_info.tti_buckets}
+                      columns={[
+                        { key: 'label', label: 'Bucket' },
+                        { key: 'count', label: 'Count' },
+                      ]}
+                    />
+                  </div>
+                </div>
+              </Section>
+            )}
 
             {/* Top user-agents */}
             <Section title="Top user-agents">

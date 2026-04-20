@@ -5,7 +5,7 @@ import { runScraper } from '../scraper.js';
 import { loadRegistry, isRegistryFresh } from '../ferryRegistry.js';
 import { getTimetable } from '../timetableCache.js';
 import { DATA_DIR } from '../config.js';
-import { recordFerryView, aggregateAnalytics } from '../analytics.js';
+import { recordFerryView, recordClientInfo, aggregateAnalytics } from '../analytics.js';
 
 const router = express.Router();
 const TIMETABLE_PATH = path.join(DATA_DIR, 'timetable.json');
@@ -97,6 +97,28 @@ router.post('/refresh', async (req, res) => {
     console.error('[api] POST /refresh error:', err.message);
     res.status(500).json({ ok: false, error: 'Refresh failed' });
   }
+});
+
+// Client-side analytics beacon — no auth required, data is already non-personal
+const ALLOWED_VIEWPORTS = new Set(['<480', '480-767', '768-1199', '1200+']);
+const ALLOWED_COLOR_SCHEMES = new Set(['dark', 'light']);
+const ALLOWED_DISPLAY_MODES = new Set(['standalone', 'browser']);
+const ALLOWED_CONN_TYPES = new Set(['slow-2g', '2g', '3g', '4g']);
+const ALLOWED_TTI_BUCKETS = new Set(['<500ms', '500ms-1s', '1s-3s', '>3s']);
+
+router.post('/beacon', (req, res) => {
+  const { viewport, colorScheme, displayMode, connectionType, ttiBucket } = req.body ?? {};
+  recordClientInfo(
+    {
+      viewport: ALLOWED_VIEWPORTS.has(viewport) ? viewport : null,
+      colorScheme: ALLOWED_COLOR_SCHEMES.has(colorScheme) ? colorScheme : null,
+      displayMode: ALLOWED_DISPLAY_MODES.has(displayMode) ? displayMode : null,
+      connectionType: ALLOWED_CONN_TYPES.has(connectionType) ? connectionType : null,
+      ttiBucket: ALLOWED_TTI_BUCKETS.has(ttiBucket) ? ttiBucket : null,
+    },
+    req,
+  );
+  res.status(204).end();
 });
 
 // Protected analytics endpoint — requires Authorization: Bearer <ANALYTICS_TOKEN>

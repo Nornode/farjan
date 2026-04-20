@@ -8,6 +8,7 @@ import Analytics from './pages/Analytics.jsx';
 import { useTheme } from './hooks/useTheme.js';
 import { useFerrySelector } from './hooks/useFerrySelector.js';
 import { useInstallPrompt } from './hooks/useInstallPrompt.js';
+import { useAnalyticsBeacon } from './hooks/useAnalyticsBeacon.js';
 import { normalizeToFerryId } from './utils/swedishVariants.js';
 
 function ErrorFallback() {
@@ -57,6 +58,7 @@ export default function App() {
   const { dark, toggle } = useTheme();
   const { ferries, loading: ferriesLoading, selectedFerry, selectedSlug, setFerry } = useFerrySelector();
   const { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall, isInstalled } = useInstallPrompt();
+  useAnalyticsBeacon();
 
   return (
     <BrowserRouter>
@@ -76,7 +78,7 @@ export default function App() {
             onDismiss={dismiss}
           />
         )}
-        <main className="flex-1 min-h-0 flex flex-col">
+        <main className="flex-1 min-h-0 flex flex-col overflow-y-auto">
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <Routes>
               {/* Default route for Skåldö */}
