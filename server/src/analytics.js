@@ -103,6 +103,17 @@ export function recordFerryView(slug, req) {
   });
 }
 
+// Record a load of the analytics dashboard itself — kept separate from user traffic
+export function recordAnalyticsView(req) {
+  appendEvent({
+    timestamp: new Date().toISOString(),
+    type: 'analytics_view',
+    ipHash: hashIp(clientIp(req)),
+    userAgent: req.headers['user-agent'] ?? null,
+    path: req.path,
+  });
+}
+
 // Record client-side environment data sent via the /api/beacon endpoint
 export function recordClientInfo(data, req) {
   appendEvent({
@@ -152,6 +163,7 @@ export function aggregateAnalytics() {
 
   let totalPageViews = 0;
   let totalFerryViews = 0;
+  let totalAnalyticsViews = 0;
 
   const viewsPerDay = {};    // { 'YYYY-MM-DD': { page_views, ferry_views, uniqueIps: Set } }
   const ferryViewCount = {}; // { slug: count }
@@ -173,6 +185,7 @@ export function aggregateAnalytics() {
 
     if (ev.type === 'page_view') totalPageViews++;
     if (ev.type === 'ferry_view') totalFerryViews++;
+    if (ev.type === 'analytics_view') totalAnalyticsViews++;
 
     // User-agents (page/ferry views only)
     if (isView && ev.userAgent) {
@@ -305,6 +318,7 @@ export function aggregateAnalytics() {
     summary: {
       total_page_views: totalPageViews,
       total_ferry_views: totalFerryViews,
+      total_analytics_views: totalAnalyticsViews,
       total_unique_visitors: allIps.size,
       most_popular_ferry: topFerries[0]?.slug ?? null,
       new_visitors: newVisitors,

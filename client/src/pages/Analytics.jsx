@@ -276,6 +276,9 @@ export default function Analytics() {
               <div className="grid grid-cols-2 gap-3">
                 <Card label="New visitors" value={data.summary.new_visitors?.toLocaleString()} />
                 <Card label="Returning visitors" value={data.summary.returning_visitors?.toLocaleString()} />
+                {data.summary.total_analytics_views > 0 && (
+                  <Card label="Dashboard loads" value={data.summary.total_analytics_views.toLocaleString()} />
+                )}
               </div>
             </Section>
 
