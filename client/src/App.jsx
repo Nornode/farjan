@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useRef } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import Nav from './components/Nav.jsx';
 import InstallBanner from './components/InstallBanner.jsx';
@@ -61,7 +62,13 @@ function AppContent() {
   const { ferries, loading: ferriesLoading, selectedFerry, selectedSlug, setFerry } = useFerrySelector();
   const { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall, isInstalled } = useInstallPrompt();
   const { visible: showWelcome, dismiss: dismissWelcome } = useFerryWelcome();
+  const ferrySelectorRef = useRef(null);
   useAnalyticsBeacon();
+
+  function handleChooseFerry() {
+    dismissWelcome();
+    setTimeout(() => ferrySelectorRef.current?.open(), 50);
+  }
 
   return (
     <>
@@ -72,6 +79,7 @@ function AppContent() {
           ferries={ferries}
           selectedFerry={selectedFerry}
           ferriesLoading={ferriesLoading}
+          ferrySelectorRef={ferrySelectorRef}
         />
         {shouldShowPrompt && (
           <InstallBanner
@@ -108,7 +116,7 @@ function AppContent() {
           </ErrorBoundary>
         </main>
       </div>
-      {showWelcome && <FerryWelcome onChoose={dismissWelcome} onContinue={dismissWelcome} />}
+      {showWelcome && <FerryWelcome onChoose={handleChooseFerry} onContinue={dismissWelcome} />}
     </>
   );
 }

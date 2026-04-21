@@ -1,17 +1,21 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-export default function FerrySelector({ ferries, selectedFerry, loading }) {
+const FerrySelector = forwardRef(function FerrySelector({ ferries, selectedFerry, loading }, ref) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const containerRef = useRef(null);
   const navigate = useNavigate();
   const { ferrySlug } = useParams();
+
+  useImperativeHandle(ref, () => ({
+    open: () => setOpen(true),
+  }));
 
   // Close dropdown on outside click or Escape
   useEffect(() => {
     if (!open) return;
     function onClickOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
     }
     function onKeyDown(e) {
       if (e.key === 'Escape') setOpen(false);
@@ -37,7 +41,7 @@ export default function FerrySelector({ ferries, selectedFerry, loading }) {
   };
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={containerRef} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-1 text-base font-bold tracking-wide text-white hover:text-white/80 transition-colors"
@@ -81,4 +85,6 @@ export default function FerrySelector({ ferries, selectedFerry, loading }) {
       )}
     </div>
   );
-}
+});
+
+export default FerrySelector;
