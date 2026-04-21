@@ -100,17 +100,16 @@ export default function Metadata({ selectedSlug, selectedFerry, isIos, onInstall
       <div className="flex-1 overflow-y-auto px-4 py-4 max-w-lg mx-auto w-full">
 
       <Section title="Om tjänsten">
-        {/* Install instructions */}
         {isInstalled ? (
-          <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Appen är redan installerad på din enhet.</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">Appen är redan installerad på din enhet.</p>
         ) : isIos ? (
-          <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">
+          <p className="text-sm text-gray-600 dark:text-slate-300">
             Installera appen: tryck på{' '}
             <span className="font-semibold">Dela</span> i Safari och välj{' '}
             <span className="font-semibold">"Lägg till på hemskärmen"</span>.
           </p>
         ) : (
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3">
             <p className="text-sm text-gray-600 dark:text-slate-300">Lägg till appen på hemskärmen för snabbare åtkomst.</p>
             <button
               onClick={onInstall}
@@ -120,17 +119,6 @@ export default function Metadata({ selectedSlug, selectedFerry, isIos, onInstall
             </button>
           </div>
         )}
-
-        {/* Data accuracy notice */}
-        <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 px-3 py-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-1">
-            Planerade avgångar
-          </p>
-          <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-            Tjänsten visar den officiella tidtabellen från Finferries — inte realtidsdata.
-            Faktiska avgångstider kan avvika, särskilt under rusningstid på högt belastade linjer.
-          </p>
-        </div>
       </Section>
 
       <Section title="Färja">
@@ -193,6 +181,17 @@ export default function Metadata({ selectedSlug, selectedFerry, isIos, onInstall
       <Section title={`Avgångar – ${mainlandLocation}`}>
         <DeparturePills departures={timetables?.mainland?.departures} />
       </Section>
+
+      {/* Data accuracy notice */}
+      <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 px-3 py-3 mb-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-1">
+          Planerade avgångar
+        </p>
+        <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+          Tjänsten visar den officiella tidtabellen från Finferries — inte realtidsdata.
+          Faktiska avgångstider kan avvika, särskilt under rusningstid på högt belastade linjer.
+        </p>
+      </div>
 
       <div className="mt-4 flex justify-end">
         <button

@@ -1,10 +1,15 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import FerrySelector from './FerrySelector.jsx';
 
 export default function Nav({ dark, onToggleTheme, ferries, selectedFerry, ferriesLoading, ferrySelectorRef }) {
   const base = 'px-4 py-1 text-sm font-medium transition-colors rounded';
   const active = 'bg-white text-ferry-navy dark:bg-slate-600 dark:text-white underline underline-offset-2';
   const inactive = 'text-white hover:bg-white/20 dark:text-slate-300 dark:hover:bg-slate-700';
+
+  const location = useLocation();
+  const ferrySlug = location.pathname.split('/').filter(Boolean)[0] ?? 'skaldo';
+  const timetablePath = `/${ferrySlug}`;
+  const metadataPath = `/${ferrySlug}/metadata`;
 
   return (
     <header className="bg-ferry-navy dark:bg-slate-800 text-white shadow-md transition-colors duration-200">
@@ -18,10 +23,10 @@ export default function Nav({ dark, onToggleTheme, ferries, selectedFerry, ferri
 
         <div className="flex items-center gap-1">
           <nav className="flex gap-1">
-            <NavLink to="/" end className={({ isActive }) => `${base} ${isActive ? active : inactive}`}>
+            <NavLink to={timetablePath} end className={({ isActive }) => `${base} ${isActive ? active : inactive}`}>
               Tidtabell
             </NavLink>
-            <NavLink to="/metadata" className={({ isActive }) => `${base} ${isActive ? active : inactive}`}>
+            <NavLink to={metadataPath} className={({ isActive }) => `${base} ${isActive ? active : inactive}`}>
               Info
             </NavLink>
           </nav>
