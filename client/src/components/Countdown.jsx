@@ -66,6 +66,13 @@ export default function Countdown({ label, departures, breaks }) {
   }
   const longWait = waitMins !== null && waitMins > 20;
 
+  function formatWait(mins) {
+    if (mins < 60) return `${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h} h ${m} min` : `${h} h`;
+  }
+
   return (
     <div className="flex-1 relative flex items-center justify-center px-5 py-4 min-h-0">
 
@@ -120,7 +127,7 @@ export default function Countdown({ label, departures, breaks }) {
         {!upcomingBreak && nextNextDep && (
           longWait ? (
             <span className="mt-1.5 inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-full px-3 py-0.5 text-xs font-medium">
-              Sedan {waitMins} min väntan till {nextNextIsNextDay ? 'imorgon ' : ''}{nextNextDep}
+              Sedan {formatWait(waitMins)} väntan till {nextNextIsNextDay ? 'imorgon ' : ''}{nextNextDep}
             </span>
           ) : (
             <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">

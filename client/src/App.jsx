@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { ErrorBoundary } from 'react-error-boundary';
 import Nav from './components/Nav.jsx';
 import InstallBanner from './components/InstallBanner.jsx';
+import FerryWelcome from './components/FerryWelcome.jsx';
 import MainCountdown from './pages/MainCountdown.jsx';
 import Metadata from './pages/Metadata.jsx';
 import Analytics from './pages/Analytics.jsx';
@@ -9,6 +10,7 @@ import { useTheme } from './hooks/useTheme.js';
 import { useFerrySelector } from './hooks/useFerrySelector.js';
 import { useInstallPrompt } from './hooks/useInstallPrompt.js';
 import { useAnalyticsBeacon } from './hooks/useAnalyticsBeacon.js';
+import { useFerryWelcome } from './hooks/useFerryWelcome.js';
 import { normalizeToFerryId } from './utils/swedishVariants.js';
 
 function ErrorFallback() {
@@ -58,17 +60,19 @@ function AppContent() {
   const { dark, toggle } = useTheme();
   const { ferries, loading: ferriesLoading, selectedFerry, selectedSlug, setFerry } = useFerrySelector();
   const { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall, isInstalled } = useInstallPrompt();
+  const { visible: showWelcome, dismiss: dismissWelcome } = useFerryWelcome();
   useAnalyticsBeacon();
 
   return (
-    <div className="h-dvh flex flex-col bg-ferry-bg dark:bg-slate-900 overflow-hidden transition-colors duration-200">
-      <Nav
-        dark={dark}
-        onToggleTheme={toggle}
-        ferries={ferries}
-        selectedFerry={selectedFerry}
-        ferriesLoading={ferriesLoading}
-      />
+    <>
+      <div className="h-dvh flex flex-col bg-ferry-bg dark:bg-slate-900 overflow-hidden transition-colors duration-200">
+        <Nav
+          dark={dark}
+          onToggleTheme={toggle}
+          ferries={ferries}
+          selectedFerry={selectedFerry}
+          ferriesLoading={ferriesLoading}
+        />
         {shouldShowPrompt && (
           <InstallBanner
             visitCount={visitCount}
@@ -103,7 +107,9 @@ function AppContent() {
             </Routes>
           </ErrorBoundary>
         </main>
-    </div>
+      </div>
+      {showWelcome && <FerryWelcome onChoose={dismissWelcome} onContinue={dismissWelcome} />}
+    </>
   );
 }
 
