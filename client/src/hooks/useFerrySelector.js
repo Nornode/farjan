@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 const LS_KEY = 'farjan_ferry';
 const DEFAULT_FERRY_ID = 'skaldo';
@@ -43,13 +43,12 @@ function pickVariant(variants) {
 }
 
 export function useFerrySelector() {
-  const { ferrySlug } = useParams();
+  const location = useLocation();
+  const ferrySlug = location.pathname.split('/').filter(Boolean)[0] ?? null;
+  const selectedId = ferrySlug ?? DEFAULT_FERRY_ID;
   const [ferries, setFerries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Determine selected ID from URL param or default to Skåldö
-  const selectedId = ferrySlug ?? DEFAULT_FERRY_ID;
 
   useEffect(() => {
     fetch('/api/ferries')

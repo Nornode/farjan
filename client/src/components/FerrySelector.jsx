@@ -26,7 +26,7 @@ export default function FerrySelector({ ferries, selectedFerry, loading }) {
     };
   }, [open]);
 
-  const displayName = selectedFerry?.name ?? (loading ? '…' : 'Välj färja');
+  const displayName = selectedFerry ? `${selectedFerry.name} Färjan` : (loading ? '…' : 'Välj färja');
 
   const handleSelectFerry = (ferryId) => {
     // Store preference in localStorage

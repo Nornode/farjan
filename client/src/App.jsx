@@ -54,22 +54,21 @@ function SwedishVariantRedirect() {
   );
 }
 
-export default function App() {
+function AppContent() {
   const { dark, toggle } = useTheme();
   const { ferries, loading: ferriesLoading, selectedFerry, selectedSlug, setFerry } = useFerrySelector();
   const { shouldShowPrompt, isIos, visitCount, dismiss, triggerNativeInstall, isInstalled } = useInstallPrompt();
   useAnalyticsBeacon();
 
   return (
-    <BrowserRouter>
-      <div className="h-dvh flex flex-col bg-ferry-bg dark:bg-slate-900 overflow-hidden transition-colors duration-200">
-        <Nav
-          dark={dark}
-          onToggleTheme={toggle}
-          ferries={ferries}
-          selectedFerry={selectedFerry}
-          ferriesLoading={ferriesLoading}
-        />
+    <div className="h-dvh flex flex-col bg-ferry-bg dark:bg-slate-900 overflow-hidden transition-colors duration-200">
+      <Nav
+        dark={dark}
+        onToggleTheme={toggle}
+        ferries={ferries}
+        selectedFerry={selectedFerry}
+        ferriesLoading={ferriesLoading}
+      />
         {shouldShowPrompt && (
           <InstallBanner
             visitCount={visitCount}
@@ -104,7 +103,14 @@ export default function App() {
             </Routes>
           </ErrorBoundary>
         </main>
-      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }
