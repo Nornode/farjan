@@ -17,8 +17,14 @@ fail()  { echo -e "    ${RED}✖${RESET}  $*"; }
 
 NAME="farjan"
 PORT="${PORT:-3000}"
+TEMP_PORT=$((PORT + 1))
+TEMP_NAME="${NAME}-new"
 DATA_DIR="${DATA_DIR:-$(pwd)/data}"
 LOG_ANALYTICS="${LOG_ANALYTICS:-true}"
+
+# Health check config
+HEALTH_RETRIES=15
+HEALTH_INTERVAL=2
 
 ENV_FILE="$(pwd)/.env"
 
@@ -83,15 +89,7 @@ else
   docker build --no-cache --label "build-hash=${SOURCE_HASH}" -t "$NEW_IMAGE" . \
     || { fail "Image build failed — existing container left untouched."; exit 1; }
   ok "Build succeeded."
-fi
 
-step "Stopping container '${NAME}' (if running)..."
-docker stop "$NAME" 2>/dev/null && ok "Stopped." || skip "Not running."
-
-step "Removing container '${NAME}' (if exists)..."
-docker rm "$NAME" 2>/dev/null && ok "Removed." || skip "Not found."
-
-if [ "$SOURCE_HASH" != "$EXISTING_HASH" ]; then
   step "Removing old image '${NAME}' (if exists)..."
   docker rmi "$NAME" 2>/dev/null && ok "Image removed." || skip "No image found."
 
@@ -101,13 +99,67 @@ if [ "$SOURCE_HASH" != "$EXISTING_HASH" ]; then
   ok "Tagged."
 fi
 
-step "Starting container '${NAME}'..."
-mkdir -p "$DATA_DIR"
-
+# Build the analytics env args (used for both temp and final container)
 ANALYTICS_ARGS=()
 if [ -n "$ANALYTICS_TOKEN" ]; then
   ANALYTICS_ARGS+=(-e "ANALYTICS_TOKEN=${ANALYTICS_TOKEN}")
 fi
+
+mkdir -p "$DATA_DIR"
+
+# ── Health check: start new container on temp port before touching the old one ──
+
+step "Starting temporary container '${TEMP_NAME}' on port ${TEMP_PORT} for health check..."
+docker run -d \
+  --name "$TEMP_NAME" \
+  -p "${TEMP_PORT}:3000" \
+  -v "${DATA_DIR}:/data" \
+  -e TZ="${TZ:-Europe/Helsinki}" \
+  -e LOG_ANALYTICS="${LOG_ANALYTICS}" \
+  "${ANALYTICS_ARGS[@]}" \
+  "$NAME"
+
+step "Waiting for health check on http://localhost:${TEMP_PORT} (up to $((HEALTH_RETRIES * HEALTH_INTERVAL))s)..."
+HEALTHY=false
+for i in $(seq 1 $HEALTH_RETRIES); do
+  if curl -sf "http://localhost:${TEMP_PORT}/" > /dev/null 2>&1; then
+    HEALTHY=true
+    break
+  fi
+  echo -e "    ${DIM}Attempt ${i}/${HEALTH_RETRIES}…${RESET}"
+  sleep "$HEALTH_INTERVAL"
+done
+
+if [ "$HEALTHY" = false ]; then
+  echo ""
+  fail "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  fail "  HEALTH CHECK FAILED — new container did not respond"
+  fail "  after $((HEALTH_RETRIES * HEALTH_INTERVAL)) seconds."
+  fail ""
+  fail "  The existing '${NAME}' container has NOT been touched."
+  fail "  Check the failed container logs with:"
+  fail "    docker logs ${TEMP_NAME}"
+  fail "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  docker stop "$TEMP_NAME" 2>/dev/null
+  docker rm   "$TEMP_NAME" 2>/dev/null
+  exit 1
+fi
+
+ok "Health check passed."
+echo ""
+
+# ── Swap: old container out, new container in ──
+
+step "Stopping old container '${NAME}' (if running)..."
+docker stop "$NAME" 2>/dev/null && ok "Stopped." || skip "Not running."
+
+step "Removing old container '${NAME}' (if exists)..."
+docker rm "$NAME" 2>/dev/null && ok "Removed." || skip "Not found."
+
+step "Stopping temporary container and starting '${NAME}' on port ${PORT}..."
+docker stop "$TEMP_NAME" 2>/dev/null
+docker rm   "$TEMP_NAME" 2>/dev/null
 
 docker run -d \
   --name "$NAME" \
@@ -124,4 +176,3 @@ echo -e "    ${GREEN}${BOLD}Running at http://localhost:${PORT}${RESET}"
 echo -e "    ${DIM}Tailing logs (Ctrl+C to stop tailing — container keeps running)...${RESET}"
 echo ""
 docker logs -f "$NAME"
-
