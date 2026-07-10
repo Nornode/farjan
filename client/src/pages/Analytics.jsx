@@ -6,7 +6,7 @@ const TOKEN_KEY = 'analytics_token';
 const BARCHART_H = 96; // matches h-24
 
 function BarChart({ data }) {
-  const [hoveredDay, setHoveredDay] = useState(null);
+  const [tooltip, setTooltip] = useState(null); // { day, v, x }
 
   if (!data || Object.keys(data).length === 0) {
     return <p className="text-sm text-gray-400">Ingen data</p>;
@@ -16,39 +16,50 @@ function BarChart({ data }) {
   const maxVal = Math.max(...entries.map(([, v]) => v.page_views + v.ferry_views), 1);
 
   return (
-    <div className="overflow-x-auto">
-      <div className="flex items-end gap-0.5 min-w-max" style={{ height: BARCHART_H }}>
-        {entries.map(([day, v]) => {
-          const total = v.page_views + v.ferry_views;
-          const heightPx = total > 0 ? Math.max(Math.round((total / maxVal) * BARCHART_H), 2) : 0;
-          return (
-            <div
-              key={day}
-              className="relative cursor-default"
-              style={{ width: 12, height: heightPx }}
-              onMouseEnter={() => setHoveredDay(day)}
-              onMouseLeave={() => setHoveredDay(null)}
-            >
-              {hoveredDay === day && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-10 pointer-events-none">
-                  <div className="bg-gray-800 dark:bg-slate-700 text-white text-[10px] rounded px-2 py-1.5 whitespace-nowrap shadow-lg">
-                    <div className="font-semibold mb-0.5">{day}</div>
-                    <div>{v.page_views} page views</div>
-                    <div>{v.ferry_views} ferry views</div>
-                    <div className="border-t border-gray-600 dark:border-slate-500 mt-1 pt-1">{total} total</div>
-                  </div>
-                </div>
-              )}
-              <div className="w-full h-full bg-ferry-blue dark:bg-blue-400 rounded-t transition-colors" />
+    <div className="relative">
+      {tooltip && (
+        <div
+          className="absolute bottom-full z-20 pointer-events-none -translate-x-1/2 mb-1.5"
+          style={{ left: tooltip.x }}
+        >
+          <div className="bg-gray-800 dark:bg-slate-700 text-white text-[10px] rounded px-2 py-1.5 whitespace-nowrap shadow-lg">
+            <div className="font-semibold mb-0.5">{tooltip.day}</div>
+            <div>{tooltip.v.page_views} page views</div>
+            <div>{tooltip.v.ferry_views} ferry views</div>
+            <div className="border-t border-gray-600 dark:border-slate-500 mt-1 pt-1">
+              {tooltip.v.page_views + tooltip.v.ferry_views} total
             </div>
-          );
-        })}
-      </div>
-      {/* x-axis: show first, middle, and last label only */}
-      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-        <span>{entries[0]?.[0]}</span>
-        <span>{entries[Math.floor(entries.length / 2)]?.[0]}</span>
-        <span>{entries[entries.length - 1]?.[0]}</span>
+          </div>
+        </div>
+      )}
+      <div className="overflow-x-auto">
+        <div className="flex items-end gap-0.5 min-w-max" style={{ height: BARCHART_H }}>
+          {entries.map(([day, v]) => {
+            const total = v.page_views + v.ferry_views;
+            const heightPx = total > 0 ? Math.max(Math.round((total / maxVal) * BARCHART_H), 2) : 0;
+            return (
+              <div
+                key={day}
+                className="cursor-default"
+                style={{ width: 12, height: heightPx }}
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const parentRect = e.currentTarget.closest('.relative').getBoundingClientRect();
+                  setTooltip({ day, v, x: rect.left - parentRect.left + rect.width / 2 });
+                }}
+                onMouseLeave={() => setTooltip(null)}
+              >
+                <div className="w-full h-full bg-ferry-blue dark:bg-blue-400 rounded-t transition-colors" />
+              </div>
+            );
+          })}
+        </div>
+        {/* x-axis: show first, middle, and last label only */}
+        <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+          <span>{entries[0]?.[0]}</span>
+          <span>{entries[Math.floor(entries.length / 2)]?.[0]}</span>
+          <span>{entries[entries.length - 1]?.[0]}</span>
+        </div>
       </div>
     </div>
   );
@@ -58,37 +69,45 @@ function BarChart({ data }) {
 const SIMPLECHART_H = 80; // matches h-20
 
 function SimpleBarChart({ items, labelKey = 'label', countKey = 'count', tickEvery }) {
-  const [hoveredIdx, setHoveredIdx] = useState(null);
+  const [tooltip, setTooltip] = useState(null); // { label, count, x }
 
   if (!items?.length) return <p className="text-sm text-gray-400 dark:text-slate-500">Ingen data</p>;
   const maxVal = Math.max(...items.map((i) => i[countKey]), 1);
   return (
-    <div className="overflow-x-auto">
-      <div className="flex items-end gap-px min-w-max" style={{ height: SIMPLECHART_H }}>
-        {items.map((item, idx) => {
-          const count = item[countKey];
-          const label = String(item[labelKey]);
-          const heightPx = count > 0 ? Math.max(Math.round((count / maxVal) * SIMPLECHART_H), 2) : 0;
-          return (
-            <div
-              key={idx}
-              className="relative cursor-default"
-              style={{ minWidth: 14, height: heightPx }}
-              onMouseEnter={() => setHoveredIdx(idx)}
-              onMouseLeave={() => setHoveredIdx(null)}
-            >
-              {hoveredIdx === idx && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-10 pointer-events-none">
-                  <div className="bg-gray-800 dark:bg-slate-700 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap shadow-lg">
-                    <span className="font-semibold">{label}:</span> {count}
-                  </div>
-                </div>
-              )}
-              <div className="w-full h-full bg-ferry-blue dark:bg-blue-400 rounded-t transition-colors" />
-            </div>
-          );
-        })}
-      </div>
+    <div className="relative">
+      {tooltip && (
+        <div
+          className="absolute bottom-full z-20 pointer-events-none -translate-x-1/2 mb-1.5"
+          style={{ left: tooltip.x }}
+        >
+          <div className="bg-gray-800 dark:bg-slate-700 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap shadow-lg">
+            <span className="font-semibold">{tooltip.label}:</span> {tooltip.count}
+          </div>
+        </div>
+      )}
+      <div className="overflow-x-auto">
+        <div className="flex items-end gap-px min-w-max" style={{ height: SIMPLECHART_H }}>
+          {items.map((item, idx) => {
+            const count = item[countKey];
+            const label = String(item[labelKey]);
+            const heightPx = count > 0 ? Math.max(Math.round((count / maxVal) * SIMPLECHART_H), 2) : 0;
+            return (
+              <div
+                key={idx}
+                className="cursor-default"
+                style={{ minWidth: 14, height: heightPx }}
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const parentRect = e.currentTarget.closest('.relative').getBoundingClientRect();
+                  setTooltip({ label, count, x: rect.left - parentRect.left + rect.width / 2 });
+                }}
+                onMouseLeave={() => setTooltip(null)}
+              >
+                <div className="w-full h-full bg-ferry-blue dark:bg-blue-400 rounded-t transition-colors" />
+              </div>
+            );
+          })}
+        </div>
       <div className="flex gap-px min-w-max mt-0.5">
         {items.map((item, idx) => {
           const label = String(item[labelKey]);
