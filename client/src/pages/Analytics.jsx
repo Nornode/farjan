@@ -122,6 +122,7 @@ function SimpleBarChart({ items, labelKey = 'label', countKey = 'count', tickEve
         })}
       </div>
     </div>
+  </div>
   );
 }
 
