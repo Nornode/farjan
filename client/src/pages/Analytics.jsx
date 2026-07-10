@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 const TOKEN_KEY = 'analytics_token';
 
 // ── Daily bar chart (30-day views) ───────────────────────────────────────────
+const BARCHART_H = 96; // matches h-24
+
 function BarChart({ data }) {
   if (!data || Object.keys(data).length === 0) {
     return <p className="text-sm text-gray-400">Ingen data</p>;
@@ -13,18 +15,17 @@ function BarChart({ data }) {
 
   return (
     <div className="overflow-x-auto">
-      <div className="flex items-end gap-0.5 h-24 min-w-max">
+      <div className="flex items-end gap-0.5 min-w-max" style={{ height: BARCHART_H }}>
         {entries.map(([day, v]) => {
           const total = v.page_views + v.ferry_views;
-          const heightPct = Math.round((total / maxVal) * 100);
+          const heightPx = total > 0 ? Math.max(Math.round((total / maxVal) * BARCHART_H), 2) : 0;
           return (
-            <div key={day} className="flex flex-col items-center gap-0.5 group relative" style={{ width: 16 }}>
-              <div
-                className="w-3 bg-ferry-blue dark:bg-blue-400 rounded-t transition-all"
-                style={{ height: `${heightPct}%`, minHeight: total > 0 ? 2 : 0 }}
-                title={`${day}: ${v.page_views} page views, ${v.ferry_views} ferry views`}
-              />
-            </div>
+            <div
+              key={day}
+              className="bg-ferry-blue dark:bg-blue-400 rounded-t transition-all"
+              style={{ width: 12, height: heightPx }}
+              title={`${day}: ${v.page_views} page views, ${v.ferry_views} ferry views`}
+            />
           );
         })}
       </div>
@@ -39,25 +40,35 @@ function BarChart({ data }) {
 }
 
 // ── Generic horizontal-distribution bar chart (hour/DOW/etc.) ───────────────
+const SIMPLECHART_H = 80; // matches h-20
+
 function SimpleBarChart({ items, labelKey = 'label', countKey = 'count', tickEvery }) {
   if (!items?.length) return <p className="text-sm text-gray-400 dark:text-slate-500">Ingen data</p>;
   const maxVal = Math.max(...items.map((i) => i[countKey]), 1);
   return (
     <div className="overflow-x-auto">
-      <div className="flex items-end gap-px h-20 min-w-max">
+      <div className="flex items-end gap-px min-w-max" style={{ height: SIMPLECHART_H }}>
         {items.map((item, idx) => {
           const count = item[countKey];
           const label = String(item[labelKey]);
-          const heightPct = Math.round((count / maxVal) * 100);
+          const heightPx = count > 0 ? Math.max(Math.round((count / maxVal) * SIMPLECHART_H), 2) : 0;
+          return (
+            <div
+              key={idx}
+              className="bg-ferry-blue dark:bg-blue-400 rounded-t transition-all"
+              style={{ minWidth: 14, height: heightPx }}
+              title={`${label}: ${count}`}
+            />
+          );
+        })}
+      </div>
+      <div className="flex gap-px min-w-max mt-0.5">
+        {items.map((item, idx) => {
+          const label = String(item[labelKey]);
           const showLabel = !tickEvery || idx % tickEvery === 0;
           return (
-            <div key={idx} className="flex flex-col items-center" style={{ minWidth: 18 }}>
-              <div
-                className="w-3.5 bg-ferry-blue dark:bg-blue-400 rounded-t transition-all"
-                style={{ height: `${heightPct}%`, minHeight: count > 0 ? 2 : 0 }}
-                title={`${label}: ${count}`}
-              />
-              <span className="text-[9px] text-gray-400 dark:text-slate-500 mt-0.5">
+            <div key={idx} className="flex justify-center" style={{ minWidth: 14 }}>
+              <span className="text-[9px] text-gray-400 dark:text-slate-500">
                 {showLabel ? label : ''}
               </span>
             </div>
