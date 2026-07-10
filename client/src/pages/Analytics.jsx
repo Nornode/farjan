@@ -2,18 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 
 const TOKEN_KEY = 'analytics_token';
 
-// ── Daily bar chart (30-day views) ───────────────────────────────────────────
+// ── Daily bar chart (30-day or 90-day views + unique visitors) ───────────────
 const BARCHART_H = 96; // matches h-24
 
-function BarChart({ data }) {
+function BarChart({ data, days = 30 }) {
   const [tooltip, setTooltip] = useState(null); // { day, v, x }
 
   if (!data || Object.keys(data).length === 0) {
     return <p className="text-sm text-gray-400">Ingen data</p>;
   }
 
-  const entries = Object.entries(data);
+  const allEntries = Object.entries(data);
+  const entries = days < allEntries.length ? allEntries.slice(-days) : allEntries;
   const maxVal = Math.max(...entries.map(([, v]) => v.page_views + v.ferry_views), 1);
+
+  // Narrower bars for 90-day view
+  const barW = days > 30 ? 4 : 7;
+  const slotGap = days > 30 ? 2 : 3;
 
   return (
     <div className="relative">
@@ -24,24 +29,28 @@ function BarChart({ data }) {
         >
           <div className="bg-gray-800 dark:bg-slate-700 text-white text-[10px] rounded px-2 py-1.5 whitespace-nowrap shadow-lg">
             <div className="font-semibold mb-0.5">{tooltip.day}</div>
-            <div>{tooltip.v.page_views} page views</div>
-            <div>{tooltip.v.ferry_views} ferry views</div>
-            <div className="border-t border-gray-600 dark:border-slate-500 mt-1 pt-1">
-              {tooltip.v.page_views + tooltip.v.ferry_views} total
+            <div className="flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-sm bg-ferry-blue dark:bg-blue-400 flex-shrink-0" />
+              {tooltip.v.page_views + tooltip.v.ferry_views} views
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-sm bg-teal-500 dark:bg-teal-400 flex-shrink-0" />
+              {tooltip.v.unique_ips} unique visitors
             </div>
           </div>
         </div>
       )}
       <div className="overflow-x-auto">
-        <div className="flex items-end gap-0.5 min-w-max" style={{ height: BARCHART_H }}>
+        <div className="flex items-end min-w-max" style={{ height: BARCHART_H, gap: slotGap }}>
           {entries.map(([day, v]) => {
             const total = v.page_views + v.ferry_views;
-            const heightPx = total > 0 ? Math.max(Math.round((total / maxVal) * BARCHART_H), 2) : 0;
+            const totalH = total > 0 ? Math.max(Math.round((total / maxVal) * BARCHART_H), 2) : 0;
+            const uniqueH = v.unique_ips > 0 ? Math.max(Math.round((v.unique_ips / maxVal) * BARCHART_H), 2) : 0;
             return (
               <div
                 key={day}
-                className="cursor-default"
-                style={{ width: 12, height: heightPx }}
+                className="flex items-end cursor-default"
+                style={{ gap: 1 }}
                 onMouseEnter={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const parentRect = e.currentTarget.closest('.relative').getBoundingClientRect();
@@ -49,17 +58,27 @@ function BarChart({ data }) {
                 }}
                 onMouseLeave={() => setTooltip(null)}
               >
-                <div className="w-full h-full bg-ferry-blue dark:bg-blue-400 rounded-t transition-colors" />
+                <div className="bg-ferry-blue dark:bg-blue-400 rounded-t transition-colors" style={{ width: barW, height: totalH }} />
+                <div className="bg-teal-500 dark:bg-teal-400 rounded-t transition-colors" style={{ width: barW, height: uniqueH }} />
               </div>
             );
           })}
         </div>
-        {/* x-axis: show first, middle, and last label only */}
+        {/* x-axis: first, middle, last */}
         <div className="flex justify-between text-[10px] text-gray-400 mt-1">
           <span>{entries[0]?.[0]}</span>
           <span>{entries[Math.floor(entries.length / 2)]?.[0]}</span>
           <span>{entries[entries.length - 1]?.[0]}</span>
         </div>
+      </div>
+      {/* legend */}
+      <div className="flex gap-4 mt-2">
+        <span className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-slate-400">
+          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-ferry-blue dark:bg-blue-400" /> Views
+        </span>
+        <span className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-slate-400">
+          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-teal-500 dark:bg-teal-400" /> Unique visitors
+        </span>
       </div>
     </div>
   );
@@ -222,6 +241,8 @@ export default function Analytics() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [loginError, setLoginError] = useState(null);
+  const [summaryWindow, setSummaryWindow] = useState('30d');
+  const [chartDays, setChartDays] = useState(30);
 
   const fetchData = useCallback(async (tkn) => {
     setLoading(true);
@@ -325,26 +346,64 @@ export default function Analytics() {
           <>
             {/* Summary cards */}
             <Section title="Summary">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                <Card label="Page views" value={data.summary.total_page_views.toLocaleString()} />
-                <Card label="Ferry views" value={data.summary.total_ferry_views.toLocaleString()} />
-                <Card label="Unique visitors" value={data.summary.total_unique_visitors.toLocaleString()} />
-                <Card label="Top ferry" value={data.summary.most_popular_ferry} />
+              {/* Timeframe picker */}
+              <div className="flex gap-1.5 mb-3">
+                {[['7d', '7 days'], ['30d', '30 days'], ['90d', '90 days'], ['all', 'All time']].map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setSummaryWindow(key)}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                      summaryWindow === key
+                        ? 'bg-ferry-navy dark:bg-blue-500 text-white border-ferry-navy dark:border-blue-500'
+                        : 'border-ferry-border dark:border-slate-600 text-ferry-navy dark:text-slate-300 hover:bg-ferry-light dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Card label="New visitors" value={data.summary.new_visitors?.toLocaleString()} />
-                <Card label="Returning visitors" value={data.summary.returning_visitors?.toLocaleString()} />
-                {data.summary.total_analytics_views > 0 && (
-                  <Card label="Dashboard loads" value={data.summary.total_analytics_views.toLocaleString()} />
-                )}
-              </div>
+              {(() => {
+                const s = data.summaries?.[summaryWindow] ?? data.summary;
+                return (
+                  <>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                      <Card label="Page views" value={s.total_page_views?.toLocaleString()} />
+                      <Card label="Ferry views" value={s.total_ferry_views?.toLocaleString()} />
+                      <Card label="Unique visitors" value={s.total_unique_visitors?.toLocaleString()} />
+                      <Card label="Top ferry" value={data.summary.most_popular_ferry} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Card label="New visitors" value={s.new_visitors?.toLocaleString()} />
+                      <Card label="Returning visitors" value={s.returning_visitors?.toLocaleString()} />
+                      {data.summary.total_analytics_views > 0 && summaryWindow === 'all' && (
+                        <Card label="Dashboard loads" value={data.summary.total_analytics_views?.toLocaleString()} />
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
             </Section>
 
             {/* Daily bar chart */}
-            <Section title="Daily views (last 30 days)">
-              <BarChart data={data.views_per_day} />
+            <Section title={`Daily views (last ${chartDays} days)`}>
+              <div className="flex gap-1.5 mb-3">
+                {[[30, '30 days'], [90, '90 days']].map(([d, label]) => (
+                  <button
+                    key={d}
+                    onClick={() => setChartDays(d)}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                      chartDays === d
+                        ? 'bg-ferry-navy dark:bg-blue-500 text-white border-ferry-navy dark:border-blue-500'
+                        : 'border-ferry-border dark:border-slate-600 text-ferry-navy dark:text-slate-300 hover:bg-ferry-light dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <BarChart data={data.views_per_day} days={chartDays} />
               <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-2">
-                Bars represent total page + ferry views per day (Helsinki time).
+                Total page + ferry views and unique visitors per day (Helsinki time).
               </p>
             </Section>
 

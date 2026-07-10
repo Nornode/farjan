@@ -158,12 +158,22 @@ function toDay(isoString) {
 export function aggregateAnalytics() {
   const events = readEvents();
 
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const now = Date.now();
+  const WIN_CUTOFFS = {
+    '7d':  new Date(now - 7  * 86400000),
+    '30d': new Date(now - 30 * 86400000),
+    '90d': new Date(now - 90 * 86400000),
+  };
 
   let totalPageViews = 0;
   let totalFerryViews = 0;
   let totalAnalyticsViews = 0;
+
+  // Per-window accumulators for summary cards
+  const winStats = {};
+  for (const key of Object.keys(WIN_CUTOFFS)) {
+    winStats[key] = { page_views: 0, ferry_views: 0, uniqueIps: new Set(), ipDays: {} };
+  }
 
   const viewsPerDay = {};    // { 'YYYY-MM-DD': { page_views, ferry_views, uniqueIps: Set } }
   const ferryViewCount = {}; // { slug: count }
@@ -197,8 +207,8 @@ export function aggregateAnalytics() {
       ferryViewCount[ev.ferrySlug] = (ferryViewCount[ev.ferrySlug] ?? 0) + 1;
     }
 
-    // Per-day breakdown (last 30 days only)
-    if (isView && new Date(ev.timestamp) >= thirtyDaysAgo) {
+    // Per-day breakdown (last 90 days)
+    if (isView && new Date(ev.timestamp) >= WIN_CUTOFFS['90d']) {
       const day = toDay(ev.timestamp);
       if (!viewsPerDay[day]) {
         viewsPerDay[day] = { page_views: 0, ferry_views: 0, uniqueIps: new Set() };
@@ -206,6 +216,22 @@ export function aggregateAnalytics() {
       if (ev.type === 'page_view') viewsPerDay[day].page_views++;
       if (ev.type === 'ferry_view') viewsPerDay[day].ferry_views++;
       if (ev.ipHash) viewsPerDay[day].uniqueIps.add(ev.ipHash);
+    }
+
+    // Per-window summary accumulators
+    if (isView) {
+      for (const [key, cutoff] of Object.entries(WIN_CUTOFFS)) {
+        if (new Date(ev.timestamp) >= cutoff) {
+          const ws = winStats[key];
+          if (ev.type === 'page_view') ws.page_views++;
+          if (ev.type === 'ferry_view') ws.ferry_views++;
+          if (ev.ipHash) {
+            ws.uniqueIps.add(ev.ipHash);
+            if (!ws.ipDays[ev.ipHash]) ws.ipDays[ev.ipHash] = new Set();
+            ws.ipDays[ev.ipHash].add(toDay(ev.timestamp));
+          }
+        }
+      }
     }
 
     if (isView) {
@@ -245,9 +271,9 @@ export function aggregateAnalytics() {
     }
   }
 
-  // Serialize viewsPerDay (convert Set → count, fill in last 30 days)
+  // Serialize viewsPerDay (convert Set → count, fill in last 90 days)
   const viewsPerDaySerialized = {};
-  for (let i = 29; i >= 0; i--) {
+  for (let i = 89; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const day = toDay(d.toISOString());
@@ -314,16 +340,35 @@ export function aggregateAnalytics() {
       .sort((a, b) => b[1] - a[1])
       .map(([label, count]) => ({ label, count }));
 
+  // Windowed summaries (7d, 30d, 90d, all)
+  const summaries = {};
+  for (const [key, ws] of Object.entries(winStats)) {
+    let newVis = 0, retVis = 0;
+    for (const days of Object.values(ws.ipDays)) {
+      if (days.size > 1) retVis++;
+      else newVis++;
+    }
+    summaries[key] = {
+      total_page_views: ws.page_views,
+      total_ferry_views: ws.ferry_views,
+      total_unique_visitors: ws.uniqueIps.size,
+      new_visitors: newVis,
+      returning_visitors: retVis,
+    };
+  }
+  summaries['all'] = {
+    total_page_views: totalPageViews,
+    total_ferry_views: totalFerryViews,
+    total_analytics_views: totalAnalyticsViews,
+    total_unique_visitors: allIps.size,
+    most_popular_ferry: topFerries[0]?.slug ?? null,
+    new_visitors: newVisitors,
+    returning_visitors: returningVisitors,
+  };
+
   return {
-    summary: {
-      total_page_views: totalPageViews,
-      total_ferry_views: totalFerryViews,
-      total_analytics_views: totalAnalyticsViews,
-      total_unique_visitors: allIps.size,
-      most_popular_ferry: topFerries[0]?.slug ?? null,
-      new_visitors: newVisitors,
-      returning_visitors: returningVisitors,
-    },
+    summary: summaries['all'],
+    summaries,
     views_per_day: viewsPerDaySerialized,
     top_ferries: topFerries,
     top_user_agents: topUserAgents,
