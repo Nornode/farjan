@@ -6,6 +6,8 @@ const TOKEN_KEY = 'analytics_token';
 const BARCHART_H = 96; // matches h-24
 
 function BarChart({ data }) {
+  const [hoveredDay, setHoveredDay] = useState(null);
+
   if (!data || Object.keys(data).length === 0) {
     return <p className="text-sm text-gray-400">Ingen data</p>;
   }
@@ -22,10 +24,23 @@ function BarChart({ data }) {
           return (
             <div
               key={day}
-              className="bg-ferry-blue dark:bg-blue-400 rounded-t transition-all"
+              className="relative cursor-default"
               style={{ width: 12, height: heightPx }}
-              title={`${day}: ${v.page_views} page views, ${v.ferry_views} ferry views`}
-            />
+              onMouseEnter={() => setHoveredDay(day)}
+              onMouseLeave={() => setHoveredDay(null)}
+            >
+              {hoveredDay === day && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-10 pointer-events-none">
+                  <div className="bg-gray-800 dark:bg-slate-700 text-white text-[10px] rounded px-2 py-1.5 whitespace-nowrap shadow-lg">
+                    <div className="font-semibold mb-0.5">{day}</div>
+                    <div>{v.page_views} page views</div>
+                    <div>{v.ferry_views} ferry views</div>
+                    <div className="border-t border-gray-600 dark:border-slate-500 mt-1 pt-1">{total} total</div>
+                  </div>
+                </div>
+              )}
+              <div className="w-full h-full bg-ferry-blue dark:bg-blue-400 rounded-t transition-colors" />
+            </div>
           );
         })}
       </div>
@@ -43,6 +58,8 @@ function BarChart({ data }) {
 const SIMPLECHART_H = 80; // matches h-20
 
 function SimpleBarChart({ items, labelKey = 'label', countKey = 'count', tickEvery }) {
+  const [hoveredIdx, setHoveredIdx] = useState(null);
+
   if (!items?.length) return <p className="text-sm text-gray-400 dark:text-slate-500">Ingen data</p>;
   const maxVal = Math.max(...items.map((i) => i[countKey]), 1);
   return (
@@ -55,10 +72,20 @@ function SimpleBarChart({ items, labelKey = 'label', countKey = 'count', tickEve
           return (
             <div
               key={idx}
-              className="bg-ferry-blue dark:bg-blue-400 rounded-t transition-all"
+              className="relative cursor-default"
               style={{ minWidth: 14, height: heightPx }}
-              title={`${label}: ${count}`}
-            />
+              onMouseEnter={() => setHoveredIdx(idx)}
+              onMouseLeave={() => setHoveredIdx(null)}
+            >
+              {hoveredIdx === idx && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-10 pointer-events-none">
+                  <div className="bg-gray-800 dark:bg-slate-700 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap shadow-lg">
+                    <span className="font-semibold">{label}:</span> {count}
+                  </div>
+                </div>
+              )}
+              <div className="w-full h-full bg-ferry-blue dark:bg-blue-400 rounded-t transition-colors" />
+            </div>
           );
         })}
       </div>
