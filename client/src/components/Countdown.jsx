@@ -57,6 +57,11 @@ export default function Countdown({ label, departures, breaks }) {
   const nextNextDep = nextIdx >= 0 ? departures[nextIdx] : null;
   const nextNextIsNextDay = nextIdx >= 0 && nextIdx < currentIdx;
 
+  const isBusyRoute = departures.length > 12;
+  const thirdIdx = nextIdx >= 0 ? (nextIdx + 1) % departures.length : -1;
+  const thirdDep = isBusyRoute && thirdIdx >= 0 && thirdIdx !== currentIdx ? departures[thirdIdx] : null;
+  const thirdIsNextDay = thirdIdx >= 0 && thirdIdx < currentIdx;
+
   // Calculate wait between next and next-next departure
   let waitMins = null;
   if (nextNextDep) {
@@ -129,6 +134,10 @@ export default function Countdown({ label, departures, breaks }) {
             <span className="mt-1.5 inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-full px-3 py-0.5 text-xs font-medium">
               Sedan {formatWait(waitMins)} väntan till {nextNextIsNextDay ? 'imorgon ' : ''}{nextNextDep}
             </span>
+          ) : isBusyRoute && thirdDep ? (
+            <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">
+              Sedan: {nextNextIsNextDay ? 'imorgon ' : ''}{nextNextDep} och {thirdIsNextDay ? 'imorgon ' : ''}{thirdDep}
+            </p>
           ) : (
             <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
               Sedan: {nextNextIsNextDay ? 'imorgon ' : ''}{nextNextDep}
