@@ -80,11 +80,15 @@ export default function MainCountdown({ selectedSlug, isIos, onInstall, isInstal
             label={islandLabel}
             departures={island?.departures}
             breaks={breaks}
+            ferrySlug={ferryId}
+            direction="on"
           />
           <Countdown
             label={mainlandLabel}
             departures={mainland?.departures}
             breaks={breaks}
+            ferrySlug={ferryId}
+            direction="fastlandet"
           />
         </div>
 

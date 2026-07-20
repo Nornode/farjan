@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import {
   getHelsinkiNow,
   toSeconds,
@@ -8,7 +9,7 @@ import {
   formatMMSS,
 } from '../hooks/timeUtils.js';
 
-export default function Countdown({ label, departures, breaks }) {
+export default function Countdown({ label, departures, breaks, ferrySlug, direction }) {
   const [tick, setTick] = useState(0);
   const intervalRef = useRef(null);
 
@@ -145,6 +146,16 @@ export default function Countdown({ label, departures, breaks }) {
           )
         )}
       </div>
+
+      {/* Timetable pill link — bottom right */}
+      {ferrySlug && direction && (
+        <Link
+          to={`/${ferrySlug}/tidtabell/${direction}`}
+          className="absolute bottom-3 right-4 text-[10px] font-medium bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 hover:bg-ferry-light dark:hover:bg-slate-600 rounded-full px-2.5 py-0.5 transition-colors"
+        >
+          Tidtabell
+        </Link>
+      )}
 
     </div>
   );
