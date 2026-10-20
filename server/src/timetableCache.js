@@ -72,18 +72,30 @@ const inFlight = new Map();
  *  - Concurrent requests for the same uncached slug share a single scrape.
  * Throws if the slug is unknown or scraping fails.
  */
-export async function getTimetable(slug) {
+export async function getTimetable(slug, forceRefresh = false) {
   ensureTimetablesDir();
 
   const cachePath = timetablePath(slug);
 
-  if (isCacheFresh(slug)) {
+  if (!forceRefresh && isCacheFresh(slug)) {
     console.log(`[cache] Serving cached timetable for ${slug}`);
     return JSON.parse(fs.readFileSync(cachePath, 'utf8'));
   }
 
+  // If force refresh requested, prevent abuse by checking if scraped in last 10s
+  if (forceRefresh && fs.existsSync(cachePath)) {
+    try {
+      const raw = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+      const scraped = raw?.metadata?.lastScrapedAt;
+      if (scraped && Date.now() - new Date(scraped).getTime() < 10_000) {
+        console.log(`[cache] Force refresh requested for ${slug}, but scraped <10s ago. Serving cache.`);
+        return raw;
+      }
+    } catch { /* proceed with scrape */ }
+  }
+
   // Migrate from legacy timetable.json if it matches (avoids a redundant scrape)
-  if (seedFromLegacy(slug, cachePath)) {
+  if (!forceRefresh && seedFromLegacy(slug, cachePath)) {
     return JSON.parse(fs.readFileSync(cachePath, 'utf8'));
   }
 

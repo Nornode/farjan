@@ -1,34 +1,65 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export function useFerryData(slug) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [fetchCount, setFetchCount] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const abortRef = useRef(null);
 
-  const refetch = useCallback(() => setFetchCount((n) => n + 1), []);
+  const fetchData = useCallback(async (force = false) => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    if (force) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const basePath = slug ? `/api/timetable/${slug}` : '/api/timetable';
+      const url = force ? `${basePath}?refresh=true` : basePath;
+
+      const res = await fetch(url, { signal: controller.signal });
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try {
+          const body = await res.json();
+          if (body?.error) detail = body.error;
+        } catch { /* ignore */ }
+        throw new Error(detail);
+      }
+      const json = await res.json();
+      setData(json);
+      setError(null);
+      return json;
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setError(err.message);
+        throw err;
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setIsRefreshing(false);
+      }
+    }
+  }, [slug]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
+    fetchData(false).catch(() => {});
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+    };
+  }, [fetchData]);
 
-    const url = slug ? `/api/timetable/${slug}` : '/api/timetable';
+  const refetch = useCallback((force = true) => fetchData(force), [fetchData]);
 
-    fetch(url, { signal: controller.signal })
-      .then(async (res) => {
-        if (!res.ok) {
-          let detail = `HTTP ${res.status}`;
-          try { const body = await res.json(); if (body?.error) detail = body.error; } catch { /* ignore */ }
-          throw new Error(detail);
-        }
-        return res.json();
-      })
-      .then((json) => { setData(json); setError(null); })
-      .catch((err) => { if (err.name !== 'AbortError') setError(err.message); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-
-    return () => controller.abort();
-  }, [slug, fetchCount]);
-
-  return { data, error, loading, refetch };
+  return { data, error, loading, isRefreshing, refetch };
 }

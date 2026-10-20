@@ -50,6 +50,9 @@ Returns the ferry registry — all verified ferries with their timetable variant
 
 Returns the timetable for a specific ferry variant. Served from cache if the file is less than 24 h old; otherwise scraped live from finferries.fi.
 
+**Query Parameters:**
+- `?refresh=true` (or `?force=true`): Forces a live re-scrape from finferries.fi, updating the local cache immediately. Rate-abuse protected (minimum 10-second spacing).
+
 **Example:** `GET /api/timetable/skaldo-1.4.2026-alkaen`
 
 **Response**

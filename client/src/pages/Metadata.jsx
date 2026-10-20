@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 import { useFerryData } from '../hooks/useFerryData.js';
@@ -57,7 +58,20 @@ function DeparturePills({ departures }) {
 export default function Metadata({ selectedSlug, selectedFerry, isIos, onInstall, isInstalled }) {
   const { ferrySlug } = useParams();
   const { selectedFerry: selectedFerryFromHook } = useFerrySelector();
-  const { data, error, loading, refetch } = useFerryData(selectedSlug);
+  const { data, error, loading, isRefreshing, refetch } = useFerryData(selectedSlug);
+  const [notification, setNotification] = useState(null);
+
+  async function handleRefresh() {
+    setNotification({ type: 'loading', message: 'Hämtar senaste tidtabell från Finferries…' });
+    try {
+      await refetch(true);
+      setNotification({ type: 'success', message: 'Tidtabellen och pauserna har uppdaterats!' });
+      setTimeout(() => setNotification(null), 4000);
+    } catch {
+      setNotification({ type: 'error', message: 'Kunde inte uppdatera tidtabellen. Försök igen senare.' });
+      setTimeout(() => setNotification(null), 5000);
+    }
+  }
 
   // Use ferry from hook if available, fallback to prop
   const ferry = selectedFerryFromHook || selectedFerry;
@@ -193,12 +207,64 @@ export default function Metadata({ selectedSlug, selectedFerry, isIos, onInstall
         </p>
       </div>
 
+      {/* Notification status message */}
+      {notification && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`mb-4 px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between transition-all duration-200 ${
+            notification.type === 'success'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50'
+              : notification.type === 'error'
+              ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/50'
+              : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {notification.type === 'loading' && (
+              <svg className="animate-spin h-3.5 w-3.5 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+            )}
+            {notification.type === 'success' && <span>✓</span>}
+            {notification.type === 'error' && <span>✕</span>}
+            <span>{notification.message}</span>
+          </div>
+          {notification.type !== 'loading' && (
+            <button
+              onClick={() => setNotification(null)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ml-2 text-sm leading-none"
+              aria-label="Stäng"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="mt-4 flex justify-end">
         <button
-          onClick={refetch}
-          className="text-xs bg-ferry-navy dark:bg-slate-700 text-white px-3 py-1.5 rounded hover:bg-ferry-blue dark:hover:bg-slate-600 transition-colors"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="text-xs bg-ferry-navy dark:bg-slate-700 text-white px-3 py-1.5 rounded hover:bg-ferry-blue dark:hover:bg-slate-600 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 shadow-sm"
         >
-          Uppdatera
+          {isRefreshing ? (
+            <>
+              <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              <span>Uppdaterar…</span>
+            </>
+          ) : (
+            <>
+              <svg className="h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              <span>Uppdatera</span>
+            </>
+          )}
         </button>
       </div>
     </div>

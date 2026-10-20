@@ -13,7 +13,15 @@ const TIMETABLES_DIR = path.join(DATA_DIR, 'timetables');
 const SKALDO_FRESH_TTL_MS = 26 * 60 * 60 * 1000; // 24h cron schedule + 2h margin
 
 // Backward-compat: Skåldö timetable
-router.get('/timetable', (_req, res) => {
+router.get('/timetable', async (req, res) => {
+  const force = req.query.refresh === 'true' || req.query.force === 'true';
+  if (force) {
+    try {
+      await runScraper();
+    } catch (err) {
+      console.error('[api] GET /timetable refresh error:', err.message);
+    }
+  }
   try {
     const raw = fs.readFileSync(TIMETABLE_PATH, 'utf8');
     res.setHeader('Cache-Control', 'no-cache');
@@ -37,11 +45,12 @@ router.get('/ferries', (_req, res) => {
 // On-demand timetable for any ferry slug
 router.get('/timetable/:slug', async (req, res) => {
   const { slug } = req.params;
+  const force = req.query.refresh === 'true' || req.query.force === 'true';
   if (!/^[a-z0-9][a-z0-9._-]*$/.test(slug)) {
     return res.status(400).json({ error: 'Invalid slug' });
   }
   try {
-    const data = await getTimetable(slug);
+    const data = await getTimetable(slug, force);
     recordFerryView(slug, req);
     res.setHeader('Cache-Control', 'no-cache');
     res.json(data);
