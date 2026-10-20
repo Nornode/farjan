@@ -85,6 +85,15 @@ NEW_IMAGE="${NAME}:new"
 if [ "$SOURCE_HASH" = "$EXISTING_HASH" ]; then
   step "No source changes detected — skipping image rebuild."
 else
+  # Check free disk space and prune builder cache if low (< 1.5 GB free)
+  if command -v df >/dev/null 2>&1; then
+    AVAIL_MB=$(df -m . 2>/dev/null | awk 'NR==2 {print $4}')
+    if [ -n "$AVAIL_MB" ] && [ "$AVAIL_MB" -lt 1500 ]; then
+      echo -e "    ${YELLOW}Low disk space detected (${AVAIL_MB} MB free). Pruning Docker build cache...${RESET}"
+      docker builder prune -f 2>/dev/null || true
+    fi
+  fi
+
   step "Source changes detected — building new image..."
   docker build --no-cache --label "build-hash=${SOURCE_HASH}" -t "$NEW_IMAGE" . \
     || { fail "Image build failed — existing container left untouched."; exit 1; }
@@ -97,6 +106,10 @@ else
   docker tag "$NEW_IMAGE" "$NAME"
   docker rmi "$NEW_IMAGE"
   ok "Tagged."
+
+  step "Pruning Docker build cache and dangling images..."
+  docker builder prune -f 2>/dev/null && ok "Build cache pruned." || skip "No build cache."
+  docker image prune -f 2>/dev/null && ok "Dangling images pruned." || skip "No dangling images."
 fi
 
 # Build the analytics env args (used for both temp and final container)

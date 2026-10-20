@@ -4,11 +4,13 @@ import path from 'path';
 import { runScraper } from '../scraper.js';
 import { loadRegistry, isRegistryFresh } from '../ferryRegistry.js';
 import { getTimetable } from '../timetableCache.js';
-import { DATA_DIR } from '../config.js';
+import { DATA_DIR, TIMETABLE_TTL_MS } from '../config.js';
 import { recordFerryView, recordClientInfo, aggregateAnalytics } from '../analytics.js';
 
 const router = express.Router();
 const TIMETABLE_PATH = path.join(DATA_DIR, 'timetable.json');
+const TIMETABLES_DIR = path.join(DATA_DIR, 'timetables');
+const SKALDO_FRESH_TTL_MS = 26 * 60 * 60 * 1000; // 24h cron schedule + 2h margin
 
 // Backward-compat: Skåldö timetable
 router.get('/timetable', (_req, res) => {
@@ -50,20 +52,100 @@ router.get('/timetable/:slug', async (req, res) => {
   }
 });
 
+export function assessRoutes() {
+  const registry = loadRegistry();
+  const totalFerries = registry?.ferries?.length ?? 0;
+  let totalVariants = 0;
+  if (registry?.ferries) {
+    for (const f of registry.ferries) {
+      totalVariants += f.variants?.length ?? 0;
+    }
+  }
+
+  let cachedCount = 0;
+  let freshCount = 0;
+  let dormantCount = 0;
+  let errorCount = 0;
+  const failedSlugs = [];
+
+  try {
+    if (fs.existsSync(TIMETABLES_DIR)) {
+      const files = fs.readdirSync(TIMETABLES_DIR).filter((f) => f.endsWith('.json'));
+      cachedCount = files.length;
+      const now = Date.now();
+
+      for (const file of files) {
+        const slug = file.replace(/\.json$/, '');
+        try {
+          const raw = JSON.parse(fs.readFileSync(path.join(TIMETABLES_DIR, file), 'utf8'));
+          const scraperStatus = raw?.metadata?.scraperStatus;
+          const scraped = raw?.metadata?.lastScrapedAt;
+
+          if (scraperStatus !== 'success') {
+            errorCount++;
+            failedSlugs.push(slug);
+            continue;
+          }
+
+          if (scraped && now - new Date(scraped).getTime() < TIMETABLE_TTL_MS) {
+            freshCount++;
+          } else {
+            // Older timetable files are expected: only Skåldö refreshes daily;
+            // other routes refresh on request after 24 hours.
+            dormantCount++;
+          }
+        } catch {
+          errorCount++;
+          failedSlugs.push(slug);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[health] Failed to inspect timetables directory:', err.message);
+  }
+
+  return {
+    totalFerries,
+    totalVariants,
+    cached: cachedCount,
+    fresh: freshCount,
+    dormant: dormantCount,
+    errors: errorCount,
+    failedSlugs,
+  };
+}
+
 router.get('/health', (_req, res) => {
   const registry = loadRegistry();
   const registryFresh = isRegistryFresh();
   let timetableStatus = 'unknown';
   let lastScrapedAt = null;
+  let timetableFresh = false;
+  let ageHours = null;
+
   try {
     const raw = JSON.parse(fs.readFileSync(TIMETABLE_PATH, 'utf8'));
     lastScrapedAt = raw?.metadata?.lastScrapedAt ?? null;
     const scraperStatus = raw?.metadata?.scraperStatus;
-    timetableStatus = scraperStatus === 'success' ? 'ok' : 'error';
+
+    if (lastScrapedAt) {
+      const ageMs = Date.now() - new Date(lastScrapedAt).getTime();
+      ageHours = Math.round((ageMs / (1000 * 60 * 60)) * 10) / 10;
+      timetableFresh = ageMs >= 0 && ageMs < SKALDO_FRESH_TTL_MS;
+    }
+
+    if (scraperStatus === 'success') {
+      timetableStatus = timetableFresh ? 'ok' : 'stale';
+    } else {
+      timetableStatus = 'error';
+    }
   } catch {
     timetableStatus = 'missing';
   }
-  const allOk = registryFresh && timetableStatus === 'ok';
+
+  const routes = assessRoutes();
+  const allOk = registryFresh && timetableFresh && timetableStatus === 'ok' && routes.errors === 0;
+
   res.status(allOk ? 200 : 503).json({
     status: allOk ? 'ok' : 'degraded',
     time: new Date().toISOString(),
@@ -75,8 +157,11 @@ router.get('/health', (_req, res) => {
     },
     timetable: {
       status: timetableStatus,
+      fresh: timetableFresh,
       lastScrapedAt,
+      ageHours,
     },
+    routes,
   });
 });
 

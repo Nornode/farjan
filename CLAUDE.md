@@ -69,7 +69,12 @@ Vite proxies `/api/*` to `http://localhost:3000` (see `client/vite.config.js`). 
 
 ## Testing
 
-No test suite currently. Validate changes by:
+Run backend tests:
+```bash
+cd server && npm test
+```
+
+Validate changes end-to-end by:
 1. Running the dev servers and checking the countdown UI
 2. Verifying API responses with `curl http://localhost:3000/api/health`
 3. Checking the browser console for errors

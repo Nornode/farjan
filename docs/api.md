@@ -89,9 +89,38 @@ Returns the Skåldö timetable from `timetable.json`. Kept for backward compatib
 
 ### `GET /api/health`
 
+Returns overall system health, including registry freshness, Skåldö timetable freshness, and assessment of cached routes.
+
 ```json
-{ "status": "ok", "time": "2026-04-17T20:00:00.000Z" }
+{
+  "status": "ok",
+  "time": "2026-10-20T07:24:34.000Z",
+  "registry": {
+    "available": true,
+    "fresh": true,
+    "ferries": 15,
+    "lastUpdated": "2026-10-20T01:15:00.000Z"
+  },
+  "timetable": {
+    "status": "ok",
+    "fresh": true,
+    "lastScrapedAt": "2026-10-20T01:07:00.000Z",
+    "ageHours": 6.3
+  },
+  "routes": {
+    "totalFerries": 15,
+    "totalVariants": 44,
+    "cached": 12,
+    "fresh": 1,
+    "dormant": 11,
+    "errors": 0,
+    "failedSlugs": []
+  }
+}
 ```
+
+- `status`: `"ok"` (HTTP 200) when registry is fresh, Skåldö is fresh (< 26h), and no route files are corrupted/errored. `"degraded"` (HTTP 503) otherwise.
+- Note: Older route files (> 24h) are classified as `dormant` (waiting for on-demand fetch when requested) and do not degrade system health.
 
 ---
 

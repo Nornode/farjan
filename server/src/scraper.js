@@ -29,11 +29,18 @@ export async function fetchHtml(url) {
   return res.text();
 }
 
-function parseBreak(text) {
-  const match = text.trim().match(/^(\d{1,2})[.:](\d{2})\s*[–\-]\s*(\d{1,2})[.:](\d{2})$/);
+export function parseBreak(text) {
+  const match = text.trim().match(/(?:^|[^\d])(\d{1,2})[.:](\d{2})\s*[–\-]\s*(\d{1,2})[.:](\d{2})(?:[^\d]|$)/);
   if (!match) return null;
-  const pad = (n) => String(parseInt(n, 10)).padStart(2, '0');
-  return { start: `${pad(match[1])}:${pad(match[2])}`, end: `${pad(match[3])}:${pad(match[4])}` };
+  const h1 = parseInt(match[1], 10);
+  const m1 = parseInt(match[2], 10);
+  const h2 = parseInt(match[3], 10);
+  const m2 = parseInt(match[4], 10);
+  if (h1 < 0 || h1 > 23 || h2 < 0 || h2 > 23 || m1 < 0 || m1 > 59 || m2 < 0 || m2 > 59) {
+    return null;
+  }
+  const pad = (n) => String(n).padStart(2, '0');
+  return { start: `${pad(h1)}:${pad(m1)}`, end: `${pad(h2)}:${pad(m2)}` };
 }
 
 /**
@@ -79,16 +86,50 @@ export function parseTimetablePage($, sourceUrl) {
   let breaks = [];
   $('p').each((_, el) => {
     const html = $(el).html() || '';
-    if (!html.includes('Tauot') && !html.includes('Pauser') && !html.includes('Breaks')) return;
+    if (!/(?:tauo|pause|break)/i.test(html)) return;
+
     const lines = html.replace(/<br\s*\/?>/gi, '\n').split('\n');
     for (const line of lines) {
       const clean = line.replace(/<[^>]+>/g, '').replace(/&ndash;/g, '–').trim();
       const parsed = parseBreak(clean);
       if (parsed) breaks.push(parsed);
     }
+
+    // If this paragraph had a break heading but the times are in following sibling <p>(s)
+    if (!breaks.length && /(?:tauot|pauser|breaks)/i.test(html)) {
+      let nextEl = $(el).next();
+      while (nextEl.length && nextEl.is('p')) {
+        const nextHtml = nextEl.html() || '';
+        const nextLines = nextHtml.replace(/<br\s*\/?>/gi, '\n').split('\n');
+        let foundInSibling = false;
+        for (const line of nextLines) {
+          const clean = line.replace(/<[^>]+>/g, '').replace(/&ndash;/g, '–').trim();
+          const parsed = parseBreak(clean);
+          if (parsed) {
+            breaks.push(parsed);
+            foundInSibling = true;
+          }
+        }
+        if (foundInSibling) break;
+        nextEl = nextEl.next();
+      }
+    }
   });
 
-  if (!breaks.length) breaks = FALLBACK_BREAKS;
+  // Deduplicate and sort breaks
+  const seenBreaks = new Set();
+  breaks = breaks.filter((b) => {
+    const key = `${b.start}-${b.end}`;
+    if (seenBreaks.has(key)) return false;
+    seenBreaks.add(key);
+    return true;
+  });
+  breaks.sort((a, b) => a.start.localeCompare(b.start));
+
+  // Only fall back to default breaks for Skåldö if parsing yielded no breaks.
+  // Other routes without breaks should have an empty breaks array.
+  const isSkaldo = typeof sourceUrl === 'string' && sourceUrl.toLowerCase().includes('skaldo');
+  if (!breaks.length && isSkaldo) breaks = FALLBACK_BREAKS;
 
   // Parse validity date
   let validityFrom = null;

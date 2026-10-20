@@ -4,28 +4,32 @@ import { useLocation } from 'react-router-dom';
 const LS_KEY = 'farjan_ferry';
 const DEFAULT_FERRY_ID = 'skaldo';
 
-function getHelsinkiDay() {
+export function getHelsinkiDateKey(date = new Date()) {
+  return date.toLocaleDateString('sv-SE', { timeZone: 'Europe/Helsinki' });
+}
+
+export function getHelsinkiDay(date = new Date()) {
   // Returns 0=Sun, 1=Mon, ..., 6=Sat in Helsinki timezone
-  const short = new Date().toLocaleDateString('en-US', {
+  const short = date.toLocaleDateString('en-US', {
     timeZone: 'Europe/Helsinki',
     weekday: 'short',
   });
-  return { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[short] ?? new Date().getDay();
+  return { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[short] ?? date.getDay();
 }
 
-function getHelsinkiMonth() {
+export function getHelsinkiMonth(date = new Date()) {
   return parseInt(
-    new Date().toLocaleDateString('en-US', { timeZone: 'Europe/Helsinki', month: 'numeric' }),
+    date.toLocaleDateString('en-US', { timeZone: 'Europe/Helsinki', month: 'numeric' }),
     10
   );
 }
 
-function pickVariant(variants) {
+export function pickVariant(variants, date = new Date()) {
   if (!variants?.length) return null;
   if (variants.length === 1) return variants[0];
 
-  const day = getHelsinkiDay();
-  const month = getHelsinkiMonth();
+  const day = getHelsinkiDay(date);
+  const month = getHelsinkiMonth(date);
   const isSummer = month >= 5 && month <= 9;
 
   const order = [];
@@ -49,6 +53,7 @@ export function useFerrySelector() {
   const [ferries, setFerries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dateKey, setDateKey] = useState(getHelsinkiDateKey);
 
   useEffect(() => {
     fetch('/api/ferries')
@@ -58,12 +63,39 @@ export function useFerrySelector() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Monitor Helsinki date changes (e.g. crossing midnight or waking device)
+  useEffect(() => {
+    const checkDate = () => {
+      const current = getHelsinkiDateKey();
+      setDateKey((prev) => (prev !== current ? current : prev));
+    };
+
+    const interval = setInterval(checkDate, 10_000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkDate();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+    };
+  }, []);
+
   const selectedFerry = useMemo(
     () => ferries.find((f) => f.id === selectedId) ?? null,
     [ferries, selectedId]
   );
 
-  const selectedVariant = useMemo(() => pickVariant(selectedFerry?.variants), [selectedFerry]);
+  const selectedVariant = useMemo(
+    () => pickVariant(selectedFerry?.variants),
+    [selectedFerry, dateKey]
+  );
 
   function setFerry(id) {
     // Store preference in localStorage for convenience
